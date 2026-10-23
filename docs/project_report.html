@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Campus Lost & Found — RDBMS Project Report</title>
+<style>
+  /* ── Page setup ── */
+  @page {
+    size: A4;
+    margin: 2.2cm 2.5cm 2cm 2.5cm;
+    @top-left   { content: "Campus Lost \0026 Found — RDBMS Lab Project (CSC2131)"; font-size: 9pt; color: #555; }
+    @top-right  { content: counter(page); font-size: 9pt; color: #555; }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Georgia', 'Times New Roman', serif;
+    font-size: 11pt;
+    line-height: 1.6;
+    color: #1a1a1a;
+    background: #fff;
+  }
+
+  /* ── Screen simulation of pages ── */
+  .page {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 2.2cm 2.5cm 2cm;
+    margin: 0 auto 30px;
+    background: #fff;
+    box-shadow: 0 2px 12px rgba(0,0,0,.12);
+    position: relative;
+    page-break-after: always;
+  }
+  .page-header {
+    border-bottom: 1px solid #aaa;
+    padding-bottom: 4px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 9pt;
+    color: #666;
+  }
+
+  /* ── Cover page ── */
+  .cover { text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .cover .report-label { font-size: 26pt; font-weight: bold; margin-bottom: 18px; }
+  .cover .project-title { font-size: 14pt; margin-bottom: 10px; }
+  .cover .author-block { font-size: 11pt; margin-top: 10px; line-height: 1.9; }
+  .cover .author-block b { font-weight: bold; }
+  .cover .meta { margin-top: 60px; font-size: 11pt; line-height: 2; }
+  .cover-divider { width: 80%; border: none; border-top: 1px solid #888; margin: 40px auto; }
+
+  /* ── Section headings ── */
+  h2 { font-size: 16pt; font-weight: bold; margin: 20px 0 10px; }
+  h3 { font-size: 12pt; font-weight: bold; margin: 16px 0 6px; }
+  p  { margin-bottom: 10px; text-align: justify; }
+  ul { padding-left: 28px; margin-bottom: 10px; }
+  li { margin-bottom: 5px; }
+  ol { padding-left: 28px; margin-bottom: 10px; }
+
+  /* ── Code / SQL blocks ── */
+  pre, code {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 9pt;
+    background: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+  }
+  pre { padding: 12px 14px; margin: 10px 0 14px; white-space: pre-wrap; word-break: break-word; line-height: 1.5; color: #1a6a1a; }
+
+  /* ── TOC ── */
+  .toc-list { list-style: none; padding: 0; }
+  .toc-list li { padding: 5px 0; border-bottom: 1px dotted #ccc; display: flex; justify-content: space-between; }
+
+  /* ── Tables ── */
+  table { width: 100%; border-collapse: collapse; margin: 12px 0 16px; font-size: 10pt; }
+  th { background: #2c3e50; color: #fff; padding: 7px 10px; text-align: left; }
+  td { padding: 6px 10px; border-bottom: 1px solid #e0e0e0; vertical-align: top; }
+  tr:nth-child(even) td { background: #f9f9f9; }
+
+  /* ── ER / Schema diagram containers ── */
+  .diagram-area { margin: 14px 0 20px; }
+  svg { width: 100%; }
+
+  /* ── Print ── */
+  @media print {
+    body { background: none; }
+    .page { box-shadow: none; margin: 0; padding: 0; width: 100%; min-height: auto; }
+    .page-header { display: flex !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════
+     PAGE 1 · COVER
+══════════════════════════════════════════════════════════ -->
+<div class="page cover">
+  <hr class="cover-divider" style="margin-bottom:60px;">
+  <div class="report-label">Report: RDBMS Lab Project</div>
+  <div class="project-title">Project Title: Campus Lost &amp; Found Management System</div>
+  <hr class="cover-divider">
+  <div class="author-block">
+    <b>Authors:</b><br>
+    Aditya Kumar &nbsp;|&nbsp; Enrollment: 230907041<br>
+    [Team Member 2] &nbsp;|&nbsp; Enrollment: 230907042<br>
+    [Team Member 3] &nbsp;|&nbsp; Enrollment: 230907043
+  </div>
+  <div class="meta">
+    <b>Course:</b> Database Management Systems Lab (CSC2131)<br>
+    <b>Institution:</b> Manipal University Jaipur<br>
+    <b>Date:</b> 23rd October 2026 &nbsp;&nbsp; <b>Version:</b> 1.0
+  </div>
+  <hr class="cover-divider" style="margin-top:60px;">
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     PAGE 2 · TABLE OF CONTENTS
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <span>Campus Lost &amp; Found — RDBMS Lab Project (CSC2131)</span><span>2</span>
+  </div>
+  <h2>Table of Contents</h2>
+  <ol class="toc-list" style="list-style:decimal; padding-left:24px; margin-top:18px;">
+    <li style="border-bottom:1px dotted #ccc; padding:7px 0;">Introduction</li>
+    <li style="border-bottom:1px dotted #ccc; padding:7px 0;">Functional Overview</li>
+    <li style="border-bottom:1px dotted #ccc; padding:7px 0;">System Architecture</li>
+    <li style="border-bottom:1px dotted #ccc; padding:7px 0;">ER Diagram</li>
+    <li style="border-bottom:1px dotted #ccc; padding:7px 0;">Database Schema</li>
+    <li style="border-bottom:1px dotted #ccc; padding:7px 0;">Implementation Details</li>
+    <li style="border-bottom:1px dotted #ccc; padding:7px 0;">Conclusion</li>
+    <li style="border-bottom:1px dotted #ccc; padding:7px 0;">Future Enhancements</li>
+  </ol>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     PAGE 3 · INTRO + FUNCTIONAL OVERVIEW + ARCHITECTURE
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <span>Campus Lost &amp; Found — RDBMS Lab Project (CSC2131)</span><span>3</span>
+  </div>
+
+  <h2>1. Introduction</h2>
+  <p>This project builds a <b>Campus Lost &amp; Found Management System</b> — a web application for Manipal University Jaipur (MUJ) that centralizes reporting and recovery of misplaced items. Students and staff can log lost or found belongings, browse active reports, and submit ownership claims that are verified by a campus admin before the item is returned. The system is backed by a MySQL 8.0 relational database that demonstrates 3NF normalization, multi-table JOINs, a database View, a Trigger, and a Stored Procedure.</p>
+
+  <h2>2. Functional Overview</h2>
+  <p>The platform consists of the following key modules:</p>
+  <ul>
+    <li><b>Item Reporting:</b> Any campus member can log a LOST or FOUND item with title, description, category, location, and date.</li>
+    <li><b>Browse &amp; Search:</b> Users can filter the live item board by type (Lost/Found) or category, and search by keyword.</li>
+    <li><b>Ownership Claims:</b> A finder of an item lists it as FOUND; the true owner submits an ownership claim with identifying proof.</li>
+    <li><b>Admin Verification:</b> An admin reviews pending claims and approves or rejects them. On approval, a database trigger automatically marks the item as RESOLVED and writes an audit entry.</li>
+    <li><b>Live Dashboard:</b> Summary counters (Total / Lost / Found / Resolved) update in real time via REST API aggregation queries.</li>
+  </ul>
+
+  <h2>3. System Architecture</h2>
+  <p>The project follows the classic three-tier architecture:</p>
+  <ol>
+    <li><b>Presentation Layer:</b> HTML5, CSS3, and Vanilla JavaScript (3-panel desktop dashboard).</li>
+    <li><b>Application Layer:</b> Python 3 with Flask — 8 clean REST endpoints that execute raw SQL.</li>
+    <li><b>Data Layer:</b> MySQL 8.0 (InnoDB) with automatic SQLite fallback for offline demo mode.</li>
+  </ol>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     PAGE 4 · ER DIAGRAM
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <span>Campus Lost &amp; Found — RDBMS Lab Project (CSC2131)</span><span>4</span>
+  </div>
+
+  <h2>4. ER Diagram</h2>
+  <p>Below is the Entity-Relationship (ER) diagram that outlines the structure of the database for the Campus Lost &amp; Found system. Primary keys are underlined, and foreign key relationships are shown with directed arrows.</p>
+
+  <div class="diagram-area">
+    <!-- ER Diagram as inline SVG -->
+    <svg viewBox="0 0 760 480" xmlns="http://www.w3.org/2000/svg" style="max-height:440px;">
+      <defs>
+        <marker id="arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+          <polygon points="0 0, 10 3.5, 0 7" fill="#2c3e50"/>
+        </marker>
+      </defs>
+
+      <!-- USERS entity -->
+      <rect x="20" y="160" width="170" height="195" rx="4" fill="#eef6ff" stroke="#2980b9" stroke-width="1.5"/>
+      <rect x="20" y="160" width="170" height="28" rx="4" fill="#2980b9"/>
+      <text x="105" y="179" text-anchor="middle" fill="white" font-weight="bold" font-size="12">users</text>
+      <line x1="20" y1="188" x2="190" y2="188" stroke="#2980b9" stroke-width="1"/>
+      <text x="30" y="208" font-size="10" fill="#1a1a1a"><tspan font-weight="bold" text-decoration="underline">PK user_id</tspan> INT AI</text>
+      <text x="30" y="224" font-size="10">full_name VARCHAR(100)</text>
+      <text x="30" y="240" font-size="10">email VARCHAR(100) UNIQUE</text>
+      <text x="30" y="256" font-size="10">phone VARCHAR(20)</text>
+      <text x="30" y="272" font-size="10">password VARCHAR(100)</text>
+      <text x="30" y="288" font-size="10">role ENUM(STUDENT…)</text>
+
+      <!-- CATEGORIES entity -->
+      <rect x="20" y="20" width="170" height="90" rx="4" fill="#eef6ff" stroke="#2980b9" stroke-width="1.5"/>
+      <rect x="20" y="20" width="170" height="28" rx="4" fill="#2980b9"/>
+      <text x="105" y="39" text-anchor="middle" fill="white" font-weight="bold" font-size="12">categories</text>
+      <line x1="20" y1="48" x2="190" y2="48" stroke="#2980b9" stroke-width="1"/>
+      <text x="30" y="68" font-size="10"><tspan font-weight="bold" text-decoration="underline">PK category_id</tspan> INT AI</text>
+      <text x="30" y="84" font-size="10">category_name VARCHAR(50)</text>
+
+      <!-- ITEMS entity (center) -->
+      <rect x="285" y="100" width="190" height="255" rx="4" fill="#fff9ec" stroke="#e67e22" stroke-width="1.5"/>
+      <rect x="285" y="100" width="190" height="28" rx="4" fill="#e67e22"/>
+      <text x="380" y="119" text-anchor="middle" fill="white" font-weight="bold" font-size="12">items</text>
+      <line x1="285" y1="128" x2="475" y2="128" stroke="#e67e22" stroke-width="1"/>
+      <text x="295" y="148" font-size="10"><tspan font-weight="bold" text-decoration="underline">PK item_id</tspan> INT AI</text>
+      <text x="295" y="164" font-size="10">report_type ENUM(LOST,FOUND)</text>
+      <text x="295" y="180" font-size="10">title VARCHAR(100)</text>
+      <text x="295" y="196" font-size="10">description TEXT</text>
+      <text x="295" y="212" font-size="10"><tspan fill="#c0392b">FK category_id</tspan> INT</text>
+      <text x="295" y="228" font-size="10">location VARCHAR(100)</text>
+      <text x="295" y="244" font-size="10">date_incident DATE</text>
+      <text x="295" y="260" font-size="10">image_url VARCHAR(255)</text>
+      <text x="295" y="276" font-size="10">status ENUM(ACTIVE…)</text>
+      <text x="295" y="292" font-size="10"><tspan fill="#c0392b">FK reported_by</tspan> INT</text>
+
+      <!-- CLAIMS entity -->
+      <rect x="555" y="100" width="180" height="185" rx="4" fill="#efffef" stroke="#27ae60" stroke-width="1.5"/>
+      <rect x="555" y="100" width="180" height="28" rx="4" fill="#27ae60"/>
+      <text x="645" y="119" text-anchor="middle" fill="white" font-weight="bold" font-size="12">claims</text>
+      <line x1="555" y1="128" x2="735" y2="128" stroke="#27ae60" stroke-width="1"/>
+      <text x="565" y="148" font-size="10"><tspan font-weight="bold" text-decoration="underline">PK claim_id</tspan> INT AI</text>
+      <text x="565" y="164" font-size="10"><tspan fill="#c0392b">FK item_id</tspan> INT</text>
+      <text x="565" y="180" font-size="10">claimant_name VARCHAR(100)</text>
+      <text x="565" y="196" font-size="10">claimant_contact VARCHAR(50)</text>
+      <text x="565" y="212" font-size="10">proof_details TEXT</text>
+      <text x="565" y="228" font-size="10">status ENUM(PENDING…)</text>
+
+      <!-- ACTIVITY_LOGS entity -->
+      <rect x="555" y="320" width="180" height="130" rx="4" fill="#fef9ff" stroke="#8e44ad" stroke-width="1.5"/>
+      <rect x="555" y="320" width="180" height="28" rx="4" fill="#8e44ad"/>
+      <text x="645" y="339" text-anchor="middle" fill="white" font-weight="bold" font-size="12">activity_logs</text>
+      <line x1="555" y1="348" x2="735" y2="348" stroke="#8e44ad" stroke-width="1"/>
+      <text x="565" y="368" font-size="10"><tspan font-weight="bold" text-decoration="underline">PK log_id</tspan> INT AI</text>
+      <text x="565" y="384" font-size="10">action_type VARCHAR(50)</text>
+      <text x="565" y="400" font-size="10">details VARCHAR(255)</text>
+      <text x="565" y="416" font-size="10">log_time TIMESTAMP</text>
+      <text x="565" y="436" font-size="10" fill="#8e44ad" font-style="italic">← auto-written by Trigger</text>
+
+      <!-- Relationships / arrows -->
+      <!-- users → items (reported_by) -->
+      <line x1="190" y1="220" x2="285" y2="220" stroke="#2c3e50" stroke-width="1.5" marker-end="url(#arrow)"/>
+      <text x="205" y="215" font-size="9" fill="#555">reports</text>
+      <!-- categories → items -->
+      <line x1="105" y1="110" x2="105" y2="140" stroke="#2c3e50" stroke-width="1.5"/>
+      <line x1="105" y1="140" x2="285" y2="168" stroke="#2c3e50" stroke-width="1.5" marker-end="url(#arrow)"/>
+      <text x="130" y="158" font-size="9" fill="#555">classifies</text>
+      <!-- items → claims -->
+      <line x1="475" y1="190" x2="555" y2="190" stroke="#2c3e50" stroke-width="1.5" marker-end="url(#arrow)"/>
+      <text x="484" y="185" font-size="9" fill="#555">has claim</text>
+      <!-- trigger annotation -->
+      <line x1="645" y1="285" x2="645" y2="320" stroke="#8e44ad" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+      <text x="648" y="308" font-size="9" fill="#8e44ad">TRIGGER fires</text>
+
+      <!-- Legend -->
+      <rect x="20" y="380" width="220" height="80" rx="4" fill="#f8f8f8" stroke="#ccc"/>
+      <text x="30" y="398" font-size="10" font-weight="bold">Legend</text>
+      <line x1="30" y1="410" x2="60" y2="410" stroke="#2c3e50" stroke-width="1.5" marker-end="url(#arrow)"/>
+      <text x="65" y="414" font-size="10">Foreign Key Reference</text>
+      <line x1="30" y1="428" x2="60" y2="428" stroke="#8e44ad" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+      <text x="65" y="432" font-size="10">Trigger (auto-action)</text>
+      <text x="30" y="450" font-size="10"><tspan font-weight="bold" text-decoration="underline">PK</tspan> = Primary Key &nbsp; <tspan fill="#c0392b">FK</tspan> = Foreign Key</text>
+    </svg>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     PAGE 5 · RELATIONAL SCHEMA
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <span>Campus Lost &amp; Found — RDBMS Lab Project (CSC2131)</span><span>5</span>
+  </div>
+
+  <h2>5. Database Schema</h2>
+  <p>Below are the complete <code>CREATE TABLE</code> definitions for all five tables in the <code>campus_lost_and_found</code> database.</p>
+
+  <h3>Users Table</h3>
+  <pre>CREATE TABLE users (
+    user_id   INT AUTO_INCREMENT PRIMARY KEY,
+    full_name VARCHAR(100) NOT NULL,
+    email     VARCHAR(100) NOT NULL UNIQUE,
+    phone     VARCHAR(20)  NOT NULL,
+    password  VARCHAR(100) NOT NULL,
+    role      ENUM('STUDENT','FACULTY','STAFF','ADMIN') DEFAULT 'STUDENT'
+);</pre>
+
+  <h3>Categories Table</h3>
+  <pre>CREATE TABLE categories (
+    category_id   INT AUTO_INCREMENT PRIMARY KEY,
+    category_name VARCHAR(50) NOT NULL UNIQUE
+);</pre>
+
+  <h3>Items Table</h3>
+  <pre>CREATE TABLE items (
+    item_id       INT AUTO_INCREMENT PRIMARY KEY,
+    report_type   ENUM('LOST','FOUND') NOT NULL,
+    title         VARCHAR(100) NOT NULL,
+    description   TEXT NOT NULL,
+    category_id   INT NOT NULL,
+    location      VARCHAR(100) NOT NULL,
+    date_incident DATE NOT NULL,
+    image_url     VARCHAR(255) DEFAULT 'images/laptop.jpg',
+    status        ENUM('ACTIVE','CLAIM_PENDING','RESOLVED') DEFAULT 'ACTIVE',
+    reported_by   INT NOT NULL,
+    FOREIGN KEY (category_id) REFERENCES categories(category_id),
+    FOREIGN KEY (reported_by) REFERENCES users(user_id)
+);</pre>
+
+  <h3>Claims Table</h3>
+  <pre>CREATE TABLE claims (
+    claim_id         INT AUTO_INCREMENT PRIMARY KEY,
+    item_id          INT NOT NULL,
+    claimant_name    VARCHAR(100) NOT NULL,
+    claimant_contact VARCHAR(50)  NOT NULL,
+    proof_details    TEXT NOT NULL,
+    status           ENUM('PENDING','APPROVED','REJECTED') DEFAULT 'PENDING',
+    FOREIGN KEY (item_id) REFERENCES items(item_id) ON DELETE CASCADE
+);</pre>
+
+  <h3>Activity Logs Table</h3>
+  <pre>CREATE TABLE activity_logs (
+    log_id      INT AUTO_INCREMENT PRIMARY KEY,
+    action_type VARCHAR(50)  NOT NULL,
+    details     VARCHAR(255) NOT NULL,
+    log_time    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);</pre>
+
+  <h3>Relational Schema (Compact View)</h3>
+  <table>
+    <tr><th>Table</th><th>Primary Key</th><th>Foreign Keys</th><th>Key Constraints</th></tr>
+    <tr><td>users</td><td>user_id</td><td>—</td><td>email UNIQUE, password NOT NULL</td></tr>
+    <tr><td>categories</td><td>category_id</td><td>—</td><td>category_name UNIQUE</td></tr>
+    <tr><td>items</td><td>item_id</td><td>category_id → categories, reported_by → users</td><td>image_url DEFAULT, report_type, status ENUM</td></tr>
+    <tr><td>claims</td><td>claim_id</td><td>item_id → items (CASCADE)</td><td>status ENUM</td></tr>
+    <tr><td>activity_logs</td><td>log_id</td><td>—</td><td>log_time DEFAULT NOW()</td></tr>
+  </table>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     PAGE 6 · IMPLEMENTATION DETAILS
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <span>Campus Lost &amp; Found — RDBMS Lab Project (CSC2131)</span><span>6</span>
+  </div>
+
+  <h2>6. Implementation Details</h2>
+
+  <h3>6.1 Multi-Table JOIN — Item Listing</h3>
+  <p>The main item board fetches data from three tables in a single query using INNER JOINs, eliminating the need to expose raw foreign key IDs to the frontend:</p>
+  <pre>SELECT i.item_id, i.report_type, i.title, i.description,
+       c.category_name, i.location, i.date_incident, i.image_url, i.status,
+       u.full_name AS reported_by_name, u.phone AS contact_phone
+FROM   items i
+JOIN   categories c ON i.category_id = c.category_id
+JOIN   users u      ON i.reported_by  = u.user_id
+ORDER  BY i.item_id DESC;</pre>
+
+  <h3>6.2 Database View — vw_active_items</h3>
+  <p>A reusable VIEW pre-joins all active items so the dashboard can query <code>SELECT * FROM vw_active_items</code> without repeating JOIN logic:</p>
+  <pre>CREATE VIEW vw_active_items AS
+SELECT i.item_id, i.report_type, i.title, c.category_name,
+       i.location, i.date_incident, i.image_url, i.status,
+       u.full_name AS reported_by_name
+FROM   items i
+JOIN   categories c ON i.category_id = c.category_id
+JOIN   users u      ON i.reported_by  = u.user_id
+WHERE  i.status != 'RESOLVED';</pre>
+
+  <h3>6.3 Trigger — Auto-Resolve on Claim Approval</h3>
+  <p>When an admin updates a claim's status to APPROVED, the following AFTER UPDATE trigger fires automatically — no extra application code required:</p>
+  <pre>CREATE TRIGGER trg_resolve_item_on_claim
+AFTER UPDATE ON claims FOR EACH ROW
+BEGIN
+    IF NEW.status = 'APPROVED' AND OLD.status != 'APPROVED' THEN
+        UPDATE items SET status = 'RESOLVED'
+        WHERE  item_id = NEW.item_id;
+
+        INSERT INTO activity_logs (action_type, details)
+        VALUES ('CLAIM_APPROVED',
+                CONCAT('Claim #', NEW.claim_id,
+                       ' approved for Item #', NEW.item_id));
+    END IF;
+END;</pre>
+
+  <h3>6.4 Stored Procedure — sp_approve_claim</h3>
+  <p>A stored procedure wraps the approval in a transaction, demonstrating TCL (Transaction Control Language):</p>
+  <pre>CREATE PROCEDURE sp_approve_claim(IN p_claim_id INT)
+BEGIN
+    START TRANSACTION;
+        UPDATE claims SET status = 'APPROVED'
+        WHERE  claim_id = p_claim_id;
+    COMMIT;
+END;</pre>
+
+  <h3>6.5 Aggregate Query — Dashboard Statistics</h3>
+  <pre>SELECT COUNT(*) AS total_items,
+       SUM(report_type = 'LOST')  AS total_lost,
+       SUM(report_type = 'FOUND') AS total_found,
+       SUM(status = 'RESOLVED')   AS total_resolved
+FROM   items;</pre>
+
+  <h3>6.6 Sample Data — Items Table (excerpt)</h3>
+  <table>
+    <tr><th>item_id</th><th>report_type</th><th>title</th><th>location</th><th>status</th></tr>
+    <tr><td>1</td><td>LOST</td><td>Dell XPS 13 Silver Laptop</td><td>Academic Block 2 (Lab 304)</td><td>ACTIVE</td></tr>
+    <tr><td>2</td><td>FOUND</td><td>Boat Airdopes 141 (Matte Black)</td><td>Sports Complex (Court 2)</td><td>CLAIM_PENDING</td></tr>
+    <tr><td>3</td><td>FOUND</td><td>MUJ Student ID Card – Priya Patel</td><td>Central Library (2nd Floor)</td><td>RESOLVED</td></tr>
+    <tr><td>4</td><td>LOST</td><td>Fossil Blue Leather Wallet</td><td>Student Food Court (Table 14)</td><td>ACTIVE</td></tr>
+    <tr><td>5</td><td>FOUND</td><td>Casio FX-991CW Calculator</td><td>Academic Block 1 (Room 108)</td><td>ACTIVE</td></tr>
+  </table>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     PAGE 7 · NORMALIZATION + CONCLUSION + FUTURE
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <span>Campus Lost &amp; Found — RDBMS Lab Project (CSC2131)</span><span>7</span>
+  </div>
+
+  <h2>Normalization (3NF)</h2>
+  <p>The database satisfies all three normal forms:</p>
+  <ul>
+    <li><b>1NF:</b> All columns hold atomic values; no repeating groups exist.</li>
+    <li><b>2NF:</b> Every non-key attribute depends fully on its table's single-column primary key (no partial dependency).</li>
+    <li><b>3NF:</b> No transitive dependencies. <code>category_name</code> was moved to the <code>categories</code> table so that <code>item_id → category_id → category_name</code> is eliminated; items now only store the foreign key <code>category_id</code>.</li>
+  </ul>
+
+  <h2>7. Conclusion</h2>
+  <p>This project delivers a fully functional, database-driven Lost &amp; Found portal for MUJ campus. It demonstrates the complete RDBMS lab syllabus — DDL/DML operations, multi-table JOINs, a database View, an AFTER UPDATE Trigger with automatic audit logging, and a Stored Procedure using transaction control. The application uses a dual-database strategy (MySQL 8.0 primary / SQLite offline fallback) ensuring the project works reliably even during a lab demonstration without MySQL access.</p>
+
+  <h2>8. Future Enhancements</h2>
+  <p>Some planned additions to extend the platform include:</p>
+  <ul>
+    <li><b>User Authentication:</b> Secure login with hashed passwords and session tokens.</li>
+    <li><b>Image Upload:</b> Allow reporters to attach photos of items for faster identification.</li>
+    <li><b>Email Notifications:</b> Send automated email alerts when a matching item is reported.</li>
+    <li><b>Admin Dashboard:</b> Full analytics view — items by category, resolution rate, average time to resolve.</li>
+    <li><b>Mobile App:</b> React Native front-end connecting to the existing Flask REST API.</li>
+    <li><b>Enhanced Security:</b> Role-based access control (RBAC) using MySQL DCL (GRANT / REVOKE).</li>
+  </ul>
+
+</div>
+
+</body>
+</html>

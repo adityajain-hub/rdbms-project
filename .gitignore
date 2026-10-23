@@ -1,0 +1,29 @@
+# Byte-compiled / optimized files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Environment variables & secrets
+.env
+*.local
+
+# OS / Editor temporary files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# Dynamic user uploads (keep directory via .gitkeep)
+frontend/uploads/*
+!frontend/uploads/.gitkeep
+
+# Teacher assignment template references (not part of software)
+Sample Example _RDBMS Project.pdf
+RDBMS project Report Format.docx

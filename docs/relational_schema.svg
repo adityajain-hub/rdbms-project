@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 820 500" xmlns="http://www.w3.org/2000/svg" font-family="'Courier New', Courier, monospace">
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0,8 3,0 6" fill="#2c3e50"/>
+    </marker>
+  </defs>
+
+  <rect width="820" height="500" fill="#fafafa" rx="6"/>
+  <text x="410" y="30" text-anchor="middle" font-size="15" font-weight="bold" fill="#2c3e50" font-family="Arial">Campus Lost &amp; Found — Relational Schema</text>
+  <line x1="40" y1="42" x2="780" y2="42" stroke="#bbb" stroke-width="1"/>
+
+  <!-- ── USERS ── -->
+  <rect x="30" y="58" width="230" height="140" rx="4" fill="white" stroke="#2980b9" stroke-width="1.8"/>
+  <rect x="30" y="58" width="230" height="26" rx="4" fill="#2980b9"/>
+  <rect x="30" y="72" width="230" height="12" fill="#2980b9"/>
+  <text x="145" y="76" text-anchor="middle" fill="white" font-size="12" font-family="Arial" font-weight="bold">users</text>
+  <line x1="30" y1="84" x2="260" y2="84" stroke="#2980b9" stroke-width="1"/>
+  <text x="40" y="101" font-size="10" fill="#c0392b" font-weight="bold">PK  user_id   INT AUTO_INCREMENT</text>
+  <line x1="40" y1="106" x2="250" y2="106" stroke="#e8e8e8"/>
+  <text x="40" y="121" font-size="10">    full_name VARCHAR(100) NOT NULL</text>
+  <text x="40" y="137" font-size="10">    email     VARCHAR(100) UNIQUE</text>
+  <text x="40" y="153" font-size="10">    phone     VARCHAR(20)  NOT NULL</text>
+  <text x="40" y="169" font-size="10">    role      ENUM(STUDENT…ADMIN)</text>
+  <text x="40" y="189" font-size="9" fill="#888" font-family="Arial">DEFAULT 'STUDENT'</text>
+
+  <!-- ── CATEGORIES ── -->
+  <rect x="30" y="225" width="230" height="95" rx="4" fill="white" stroke="#2980b9" stroke-width="1.8"/>
+  <rect x="30" y="225" width="230" height="26" rx="4" fill="#2980b9"/>
+  <rect x="30" y="239" width="230" height="12" fill="#2980b9"/>
+  <text x="145" y="243" text-anchor="middle" fill="white" font-size="12" font-family="Arial" font-weight="bold">categories</text>
+  <line x1="30" y1="251" x2="260" y2="251" stroke="#2980b9" stroke-width="1"/>
+  <text x="40" y="269" font-size="10" fill="#c0392b" font-weight="bold">PK  category_id   INT AUTO_INCREMENT</text>
+  <line x1="40" y1="274" x2="250" y2="274" stroke="#e8e8e8"/>
+  <text x="40" y="291" font-size="10">    category_name VARCHAR(50) UNIQUE</text>
+  <text x="40" y="309" font-size="9" fill="#888" font-family="Arial">NOT NULL</text>
+
+  <!-- ── ITEMS ── -->
+  <rect x="295" y="58" width="255" height="280" rx="4" fill="white" stroke="#e67e22" stroke-width="1.8"/>
+  <rect x="295" y="58" width="255" height="26" rx="4" fill="#e67e22"/>
+  <rect x="295" y="72" width="255" height="12" fill="#e67e22"/>
+  <text x="422" y="76" text-anchor="middle" fill="white" font-size="12" font-family="Arial" font-weight="bold">items</text>
+  <line x1="295" y1="84" x2="550" y2="84" stroke="#e67e22" stroke-width="1"/>
+  <text x="305" y="101" font-size="10" fill="#c0392b" font-weight="bold">PK  item_id      INT AUTO_INCREMENT</text>
+  <line x1="305" y1="106" x2="540" y2="106" stroke="#e8e8e8"/>
+  <text x="305" y="121" font-size="10">    report_type  ENUM(LOST, FOUND)</text>
+  <text x="305" y="137" font-size="10">    title        VARCHAR(100) NOT NULL</text>
+  <text x="305" y="153" font-size="10">    description  TEXT NOT NULL</text>
+  <text x="305" y="169" font-size="10" fill="#8e44ad" font-weight="bold">FK  category_id  INT NOT NULL</text>
+  <text x="305" y="185" font-size="10">    location     VARCHAR(100)</text>
+  <text x="305" y="201" font-size="10">    date_incident DATE NOT NULL</text>
+  <text x="305" y="217" font-size="10">    status        ENUM(ACTIVE,</text>
+  <text x="305" y="233" font-size="10">                       CLAIM_PENDING,</text>
+  <text x="305" y="249" font-size="10">                       RESOLVED)</text>
+  <text x="305" y="269" font-size="10" fill="#8e44ad" font-weight="bold">FK  reported_by   INT NOT NULL</text>
+  <text x="305" y="285" font-size="9" fill="#888" font-family="Arial">FOREIGN KEY category_id → categories(category_id)</text>
+  <text x="305" y="300" font-size="9" fill="#888" font-family="Arial">FOREIGN KEY reported_by  → users(user_id)</text>
+  <text x="305" y="328" font-size="9" fill="#e67e22" font-family="Arial" font-style="italic">DEFAULT 'ACTIVE'</text>
+
+  <!-- ── CLAIMS ── -->
+  <rect x="570" y="58" width="220" height="215" rx="4" fill="white" stroke="#27ae60" stroke-width="1.8"/>
+  <rect x="570" y="58" width="220" height="26" rx="4" fill="#27ae60"/>
+  <rect x="570" y="72" width="220" height="12" fill="#27ae60"/>
+  <text x="680" y="76" text-anchor="middle" fill="white" font-size="12" font-family="Arial" font-weight="bold">claims</text>
+  <line x1="570" y1="84" x2="790" y2="84" stroke="#27ae60" stroke-width="1"/>
+  <text x="580" y="101" font-size="10" fill="#c0392b" font-weight="bold">PK  claim_id         INT AI</text>
+  <line x1="580" y1="106" x2="780" y2="106" stroke="#e8e8e8"/>
+  <text x="580" y="121" font-size="10" fill="#8e44ad" font-weight="bold">FK  item_id          INT</text>
+  <text x="580" y="137" font-size="10">    claimant_name    VARCHAR(100)</text>
+  <text x="580" y="153" font-size="10">    claimant_contact VARCHAR(50)</text>
+  <text x="580" y="169" font-size="10">    proof_details    TEXT</text>
+  <text x="580" y="185" font-size="10">    status           ENUM</text>
+  <text x="580" y="201" font-size="10">      (PENDING, APPROVED,</text>
+  <text x="580" y="217" font-size="10">       REJECTED)</text>
+  <text x="580" y="237" font-size="9" fill="#888" font-family="Arial">FOREIGN KEY item_id → items(item_id)</text>
+  <text x="580" y="252" font-size="9" fill="#888" font-family="Arial">ON DELETE CASCADE</text>
+
+  <!-- ── ACTIVITY_LOGS ── -->
+  <rect x="570" y="305" width="220" height="155" rx="4" fill="white" stroke="#8e44ad" stroke-width="1.8"/>
+  <rect x="570" y="305" width="220" height="26" rx="4" fill="#8e44ad"/>
+  <rect x="570" y="319" width="220" height="12" fill="#8e44ad"/>
+  <text x="680" y="323" text-anchor="middle" fill="white" font-size="12" font-family="Arial" font-weight="bold">activity_logs</text>
+  <line x1="570" y1="331" x2="790" y2="331" stroke="#8e44ad" stroke-width="1"/>
+  <text x="580" y="350" font-size="10" fill="#c0392b" font-weight="bold">PK  log_id      INT AUTO_INCREMENT</text>
+  <line x1="580" y1="355" x2="780" y2="355" stroke="#e8e8e8"/>
+  <text x="580" y="370" font-size="10">    action_type VARCHAR(50) NOT NULL</text>
+  <text x="580" y="386" font-size="10">    details     VARCHAR(255) NOT NULL</text>
+  <text x="580" y="402" font-size="10">    log_time    TIMESTAMP</text>
+  <text x="580" y="418" font-size="9" fill="#888" font-family="Arial">DEFAULT CURRENT_TIMESTAMP</text>
+  <text x="580" y="450" font-size="9" fill="#8e44ad" font-family="Arial" font-style="italic">Populated by Trigger (no FK)</text>
+
+  <!-- ── Relationship arrows ── -->
+  <!-- users.user_id → items.reported_by -->
+  <line x1="260" y1="130" x2="295" y2="200" stroke="#8e44ad" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr)"/>
+  <text x="263" y="165" font-size="9" fill="#8e44ad" font-family="Arial">1 → M</text>
+
+  <!-- categories.category_id → items.category_id -->
+  <line x1="260" y1="263" x2="295" y2="230" stroke="#8e44ad" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr)"/>
+  <text x="263" y="250" font-size="9" fill="#8e44ad" font-family="Arial">1 → M</text>
+
+  <!-- items.item_id → claims.item_id -->
+  <line x1="550" y1="170" x2="570" y2="155" stroke="#8e44ad" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr)"/>
+  <text x="549" y="165" font-size="9" fill="#8e44ad" font-family="Arial">1→M</text>
+
+  <!-- ── Legend ── -->
+  <rect x="30" y="345" width="250" height="90" rx="4" fill="white" stroke="#ccc" stroke-width="1"/>
+  <text x="42" y="367" font-size="11" font-weight="bold" fill="#2c3e50" font-family="Arial">Legend</text>
+  <rect x="42" y="378" width="12" height="12" fill="#c0392b"/>
+  <text x="60" y="389" font-size="10" fill="#2c3e50" font-family="Arial">PK = Primary Key</text>
+  <rect x="42" y="398" width="12" height="12" fill="#8e44ad"/>
+  <text x="60" y="409" font-size="10" fill="#2c3e50" font-family="Arial">FK = Foreign Key</text>
+  <line x1="42" y1="424" x2="70" y2="424" stroke="#8e44ad" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr)"/>
+  <text x="76" y="428" font-size="10" fill="#2c3e50" font-family="Arial">Referential Constraint (1→M)</text>
+</svg>

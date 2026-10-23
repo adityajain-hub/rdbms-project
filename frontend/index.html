@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campus Lost &amp; Found — Desktop Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Top Titlebar -->
+  <header class="titlebar">
+    <div class="titlebar-brand">
+      <div class="app-icon">LF</div>
+      <h1>Campus Lost &amp; Found</h1>
+      <span>— Manipal University Jaipur (RDBMS Lab CSC2131)</span>
+    </div>
+    <div class="titlebar-right">
+      <!-- User Profile Pill / Auth Switcher -->
+      <div class="user-pill" id="userPill" onclick="openLoginModal()" title="Current Authenticated User (Click to switch)">
+        <span class="user-avatar" id="userAvatar">A</span>
+        <div class="user-details">
+          <span class="user-name" id="userName">Aditya</span>
+          <span class="user-role badge-admin" id="userRole">ADMIN</span>
+        </div>
+        <button class="btn-logout" id="logoutBtn" onclick="logoutUser(event)" title="Log out or switch account">Switch</button>
+      </div>
+
+      <!-- Theme Toggle Switch (Dark / Light) -->
+      <div class="theme-switch-wrapper" title="Toggle Light / Dark Mode">
+        <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" aria-label="Toggle Theme">
+          <span class="theme-icon" id="themeIcon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+          </span>
+          <span class="theme-text" id="themeText">Dark</span>
+        </button>
+      </div>
+
+      <div class="status-indicator">
+        <div class="status-dot"></div>
+        <span id="dbStatus">MySQL 8.0 Connected</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Three-Panel Workspace -->
+  <div class="app-workspace">
+
+    <!-- 1. LEFT SIDEBAR (FILTERS & CATEGORIES) -->
+    <aside class="sidebar-left">
+      <div class="section-label">NAVIGATION</div>
+      <div class="nav-list">
+        <div class="nav-item active" onclick="setNavFilter('', this)">
+          <svg class="nav-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+          <span>All Belongings</span>
+          <span class="count-badge" id="countAll">0</span>
+        </div>
+        <div class="nav-item" onclick="setNavFilter('LOST', this)">
+          <svg class="nav-icon" viewBox="0 0 24 24" style="color:var(--accent-red);"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>
+          <span>Lost Items</span>
+          <span class="count-badge" id="countLost">0</span>
+        </div>
+        <div class="nav-item" onclick="setNavFilter('FOUND', this)">
+          <svg class="nav-icon" viewBox="0 0 24 24" style="color:var(--accent-green);"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+          <span>Found Items</span>
+          <span class="count-badge" id="countFound">0</span>
+        </div>
+        <div class="nav-item" id="adminClaimsNavItem" onclick="showAdminView(this)">
+          <svg class="nav-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <span>Admin Claims</span>
+          <span class="count-badge" id="countClaims">0</span>
+        </div>
+      </div>
+
+      <div class="section-label" style="margin-top:14px;">CATEGORIES</div>
+      <div class="nav-list" id="categoryNavList">
+        <!-- Dynamically populated categories with SVG icons -->
+      </div>
+
+      <div class="sidebar-bottom">
+        <button class="btn-action-primary" onclick="showNewItemForm()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>Report New Item</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- 2. CENTER PANEL (GRID DECK) -->
+    <section class="center-viewport">
+      <div class="center-toolbar">
+        <input type="text" id="searchInput" class="search-field" placeholder="Search by name, location, keyword...">
+        <div style="font-size: 0.78rem; color: var(--text-dim);" id="viewLabel">Showing: All Items</div>
+      </div>
+
+      <div class="grid-scroll-area">
+        <div class="items-grid" id="itemsDeck">
+          <!-- Item Key Tiles loaded by JavaScript -->
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. RIGHT INSPECTOR PANEL -->
+    <aside class="sidebar-right">
+      <div class="inspector-header">
+        <h3 id="inspectorHeaderTitle">INSPECTOR</h3>
+        <div class="inspector-subtitle" id="inspectorHeaderSub">Select an item to view</div>
+      </div>
+
+      <div class="inspector-content" id="inspectorBody">
+        <!-- Content dynamically swapped based on selection -->
+        <p style="color: var(--text-dim); font-size: 0.82rem; text-align: center; margin-top: 40px;">
+          Click any item tile in the center grid to inspect details, file a claim, or review verification proof.
+        </p>
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- Bottom Statusbar -->
+  <footer class="statusbar">
+    <div class="statusbar-left">
+      <span>Database: <b>MySQL 8.0 (InnoDB)</b></span>
+      <span>Normalization: <b>3NF Compliant</b></span>
+      <span>Trigger: <b>trg_resolve_item_on_claim (Active)</b></span>
+    </div>
+    <div class="statusbar-right">
+      <span>Total: <b id="barTotal">0</b></span>
+      <span>Lost: <b id="barLost">0</b></span>
+      <span>Found: <b id="barFound">0</b></span>
+      <span>Resolved: <b id="barResolved">0</b></span>
+    </div>
+  </footer>
+
+  <!-- AUTH / LOGIN MODAL OVERLAY -->
+  <div class="login-overlay" id="loginOverlay">
+    <div class="login-modal">
+      <div class="login-header">
+        <div class="login-header-icon">LF</div>
+        <h2>Campus Portal Authentication</h2>
+        <p>RDBMS Lab (CSC2131) · Manipal University Jaipur</p>
+      </div>
+
+      <div class="login-error-box" id="loginErrorMsg"></div>
+
+      <form id="loginForm" onsubmit="handleLoginSubmit(event)">
+        <div class="form-row">
+          <label>University Email</label>
+          <input type="email" class="form-control" id="loginEmail" placeholder="e.g. aditya.2502052853@muj.maipal.edu" value="aditya.2502052853@muj.maipal.edu" required>
+        </div>
+        <div class="form-row">
+          <label>Password</label>
+          <input type="password" class="form-control" id="loginPassword" placeholder="Enter password" value="adi@123" required>
+        </div>
+        <button type="submit" class="btn-action-primary" style="margin-top: 10px;">
+          Sign In to Portal
+        </button>
+      </form>
+
+      <div class="quick-auth-section">
+        <div class="quick-auth-label">⚡ 1-Click Quick Demo Sign-In</div>
+        <div class="quick-auth-grid">
+          <button type="button" class="btn-quick-user" onclick="quickLogin('aditya.2502052853@muj.maipal.edu', 'adi@123')">
+            <div class="btn-quick-user-left">
+              <span class="user-avatar" style="background:#8b5cf6;">A</span>
+              <div>
+                <div class="btn-quick-user-name">Aditya <span class="user-role badge-admin">ADMIN</span></div>
+                <div class="btn-quick-user-email">aditya.2502052853@muj.maipal.edu</div>
+              </div>
+            </div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+
+          <button type="button" class="btn-quick-user" onclick="quickLogin('aarav.sharma@muj.manipal.edu', 'student@123')">
+            <div class="btn-quick-user-left">
+              <span class="user-avatar" style="background:#10b981;">A</span>
+              <div>
+                <div class="btn-quick-user-name">Aarav Sharma <span class="user-role badge-student">STUDENT</span></div>
+                <div class="btn-quick-user-email">aarav.sharma@muj.manipal.edu</div>
+              </div>
+            </div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
