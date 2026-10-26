@@ -534,6 +534,17 @@ function selectItem(itemId) {
         Case Resolved: Returned to verified owner.
       </div>
     `;
+  } else if (!isFound && !isResolved) {
+    actionHtml = `
+      <div style="background: var(--bg-card); border: 1px dashed var(--border-color); border-radius: 6px; padding: 12px; margin-top: 12px; text-align: center;">
+        <div style="font-size: 0.74rem; font-weight: 700; color: var(--accent-red); margin-bottom: 4px; display: flex; align-items: center; justify-content: center; gap: 5px;">
+          <span>🔍</span> <span>LOST ITEM NOTICE</span>
+        </div>
+        <p style="font-size: 0.73rem; color: var(--text-dim); margin: 0; line-height: 1.4;">
+          This item is reported as <b>LOST</b>. If someone finds it and logs it as a <b>FOUND ITEM</b>, the <b>"FILE OWNERSHIP CLAIM"</b> button will appear on that found item.
+        </p>
+      </div>
+    `;
   }
 
   const inspector = document.getElementById('inspectorBody');
