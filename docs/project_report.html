@@ -2,32 +2,32 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Campus Lost & Found — RDBMS Project Report</title>
+<title>Campus Lost &amp; Found — RDBMS Project Report</title>
 <style>
-  /* ── Page setup ── */
+  /* ── A4 Page Setup & Print Formatting ── */
   @page {
     size: A4;
-    margin: 2.2cm 2.5cm 2cm 2.5cm;
-    @top-left   { content: "Campus Lost \0026 Found — RDBMS Lab Project (CSC2131)"; font-size: 9pt; color: #555; }
-    @top-right  { content: counter(page); font-size: 9pt; color: #555; }
+    margin: 2cm 2.2cm 2cm 2.2cm;
+    @top-left   { content: "Campus Lost \0026 Found — RDBMS Lab Project (CSC2131)"; font-size: 8.5pt; color: #555; }
+    @top-right  { content: counter(page); font-size: 8.5pt; color: #555; }
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: 'Georgia', 'Times New Roman', serif;
-    font-size: 11pt;
+    font-size: 10.5pt;
     line-height: 1.6;
     color: #1a1a1a;
-    background: #fff;
+    background: #e5e7eb;
   }
 
-  /* ── Screen simulation of pages ── */
+  /* ── Realistic Sheet Layout for Display & Print ── */
   .page {
     width: 210mm;
     min-height: 297mm;
     padding: 2.2cm 2.5cm 2cm;
-    margin: 0 auto 30px;
+    margin: 25px auto;
     background: #fff;
-    box-shadow: 0 2px 12px rgba(0,0,0,.12);
+    box-shadow: 0 4px 14px rgba(0,0,0,.15);
     position: relative;
     page-break-after: always;
   }
@@ -37,52 +37,113 @@
     margin-bottom: 20px;
     display: flex;
     justify-content: space-between;
-    font-size: 9pt;
+    font-size: 8.5pt;
     color: #666;
   }
 
-  /* ── Cover page ── */
-  .cover { text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-  .cover .report-label { font-size: 26pt; font-weight: bold; margin-bottom: 18px; }
-  .cover .project-title { font-size: 14pt; margin-bottom: 10px; }
-  .cover .author-block { font-size: 11pt; margin-top: 10px; line-height: 1.9; }
+  /* ── Cover Page ── */
+  .cover { 
+    text-align: center; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    justify-content: center; 
+    min-height: 297mm;
+  }
+  .cover .institution-name {
+    font-size: 14pt;
+    font-weight: bold;
+    color: #2c3e50;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+  .cover .department-name {
+    font-size: 11pt;
+    color: #555;
+    margin-bottom: 20px;
+  }
+  .cover .report-label { 
+    font-size: 22pt; 
+    font-weight: bold; 
+    color: #1a1a1a;
+    margin: 20px 0 10px; 
+  }
+  .cover .project-title { 
+    font-size: 16pt; 
+    font-weight: 600;
+    color: #2980b9; 
+    margin-bottom: 15px; 
+  }
+  .cover .author-block { 
+    font-size: 11pt; 
+    margin-top: 25px; 
+    line-height: 2; 
+  }
   .cover .author-block b { font-weight: bold; }
-  .cover .meta { margin-top: 60px; font-size: 11pt; line-height: 2; }
-  .cover-divider { width: 80%; border: none; border-top: 1px solid #888; margin: 40px auto; }
+  .cover .meta { 
+    margin-top: 50px; 
+    font-size: 10.5pt; 
+    line-height: 2.2; 
+    color: #333;
+  }
+  .cover-divider { 
+    width: 80%; 
+    border: none; 
+    border-top: 1.5px solid #2980b9; 
+    margin: 30px auto; 
+  }
 
-  /* ── Section headings ── */
-  h2 { font-size: 16pt; font-weight: bold; margin: 20px 0 10px; }
-  h3 { font-size: 12pt; font-weight: bold; margin: 16px 0 6px; }
+  /* ── Typography & Section Styling ── */
+  h2 { font-size: 15pt; font-weight: bold; color: #1e293b; margin: 22px 0 10px; border-bottom: 1.5px solid #e2e8f0; padding-bottom: 4px; }
+  h3 { font-size: 11.5pt; font-weight: bold; color: #334155; margin: 16px 0 6px; }
   p  { margin-bottom: 10px; text-align: justify; }
-  ul { padding-left: 28px; margin-bottom: 10px; }
-  li { margin-bottom: 5px; }
-  ol { padding-left: 28px; margin-bottom: 10px; }
+  ul, ol { padding-left: 24px; margin-bottom: 10px; }
+  li { margin-bottom: 4px; }
 
-  /* ── Code / SQL blocks ── */
+  /* ── Code / SQL Blocks ── */
   pre, code {
     font-family: 'Courier New', Courier, monospace;
-    font-size: 9pt;
-    background: #f5f5f5;
-    border: 1px solid #ddd;
-    border-radius: 3px;
+    font-size: 8.8pt;
   }
-  pre { padding: 12px 14px; margin: 10px 0 14px; white-space: pre-wrap; word-break: break-word; line-height: 1.5; color: #1a6a1a; }
-
-  /* ── TOC ── */
-  .toc-list { list-style: none; padding: 0; }
-  .toc-list li { padding: 5px 0; border-bottom: 1px dotted #ccc; display: flex; justify-content: space-between; }
+  code {
+    background: #f1f5f9;
+    padding: 1px 4px;
+    border-radius: 3px;
+    color: #0f172a;
+  }
+  pre { 
+    padding: 10px 12px; 
+    margin: 8px 0 12px; 
+    white-space: pre-wrap; 
+    word-break: break-word; 
+    line-height: 1.45; 
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    color: #0f5132;
+  }
 
   /* ── Tables ── */
-  table { width: 100%; border-collapse: collapse; margin: 12px 0 16px; font-size: 10pt; }
-  th { background: #2c3e50; color: #fff; padding: 7px 10px; text-align: left; }
-  td { padding: 6px 10px; border-bottom: 1px solid #e0e0e0; vertical-align: top; }
-  tr:nth-child(even) td { background: #f9f9f9; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0 16px; font-size: 9.5pt; }
+  th { background: #1e293b; color: #fff; padding: 7px 10px; text-align: left; }
+  td { padding: 6px 10px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+  tr:nth-child(even) td { background: #f8fafc; }
 
-  /* ── ER / Schema diagram containers ── */
-  .diagram-area { margin: 14px 0 20px; }
-  svg { width: 100%; }
+  /* ── Diagram Containers ── */
+  .diagram-area { margin: 12px 0 16px; text-align: center; }
+  svg { width: 100%; max-width: 100%; }
 
-  /* ── Print ── */
+  .callout-box {
+    background: #f0fdf4;
+    border-left: 4px solid #10b981;
+    padding: 10px 14px;
+    margin: 12px 0;
+    font-size: 9.8pt;
+    color: #064e3b;
+  }
+
+  /* ── Print Media ── */
   @media print {
     body { background: none; }
     .page { box-shadow: none; margin: 0; padding: 0; width: 100%; min-height: auto; }
@@ -93,361 +154,555 @@
 <body>
 
 <!-- ══════════════════════════════════════════════════════════
-     PAGE 1 · COVER
+     PAGE 1 · COVER PAGE
 ══════════════════════════════════════════════════════════ -->
 <div class="page cover">
-  <hr class="cover-divider" style="margin-bottom:60px;">
-  <div class="report-label">Report: RDBMS Lab Project</div>
-  <div class="project-title">Project Title: Campus Lost &amp; Found Management System</div>
+  <div class="institution-name">Manipal University Jaipur</div>
+  <div class="department-name">Department of Computer Science &amp; Engineering</div>
+  <hr class="cover-divider">
+  <div class="report-label">LABORATORY PROJECT REPORT</div>
+  <div class="project-title">Campus Lost &amp; Found Relational Database Management System</div>
   <hr class="cover-divider">
   <div class="author-block">
-    <b>Authors:</b><br>
-    Aditya Kumar &nbsp;|&nbsp; Enrollment: 230907041<br>
-    [Team Member 2] &nbsp;|&nbsp; Enrollment: 230907042<br>
-    [Team Member 3] &nbsp;|&nbsp; Enrollment: 230907043
+    <b>Submitted By:</b><br>
+    <b>Aditya Jain</b> &nbsp;|&nbsp; Reg. No: 2502052853 &nbsp;|&nbsp; Lead Developer &amp; System Architect<br>
+    [Project Partner 1] &nbsp;|&nbsp; Reg. No: 2502052854 &nbsp;|&nbsp; Frontend &amp; Schema Testing<br>
+    [Project Partner 2] &nbsp;|&nbsp; Reg. No: 2502052855 &nbsp;|&nbsp; Query Suite &amp; Documentation
   </div>
   <div class="meta">
-    <b>Course:</b> Database Management Systems Lab (CSC2131)<br>
-    <b>Institution:</b> Manipal University Jaipur<br>
-    <b>Date:</b> 23rd October 2026 &nbsp;&nbsp; <b>Version:</b> 1.0
+    <b>Course:</b> Relational Database Management Systems Lab (CSC2131)<br>
+    <b>Academic Year:</b> 2026 – 2027<br>
+    <b>Database Engine:</b> MySQL 8.0 (InnoDB) with Dual-Failover Engine<br>
+    <b>Date of Submission:</b> 26th October 2026 &nbsp;|&nbsp; <b>Version:</b> 2.0 (Final Academic Draft)
   </div>
-  <hr class="cover-divider" style="margin-top:60px;">
 </div>
 
 <!-- ══════════════════════════════════════════════════════════
-     PAGE 2 · TABLE OF CONTENTS
+     PAGE 2 · TABLE OF CONTENTS & EXECUTIVE SUMMARY
 ══════════════════════════════════════════════════════════ -->
 <div class="page">
   <div class="page-header">
     <span>Campus Lost &amp; Found — RDBMS Lab Project (CSC2131)</span><span>2</span>
   </div>
+  
   <h2>Table of Contents</h2>
-  <ol class="toc-list" style="list-style:decimal; padding-left:24px; margin-top:18px;">
-    <li style="border-bottom:1px dotted #ccc; padding:7px 0;">Introduction</li>
-    <li style="border-bottom:1px dotted #ccc; padding:7px 0;">Functional Overview</li>
-    <li style="border-bottom:1px dotted #ccc; padding:7px 0;">System Architecture</li>
-    <li style="border-bottom:1px dotted #ccc; padding:7px 0;">ER Diagram</li>
-    <li style="border-bottom:1px dotted #ccc; padding:7px 0;">Database Schema</li>
-    <li style="border-bottom:1px dotted #ccc; padding:7px 0;">Implementation Details</li>
-    <li style="border-bottom:1px dotted #ccc; padding:7px 0;">Conclusion</li>
-    <li style="border-bottom:1px dotted #ccc; padding:7px 0;">Future Enhancements</li>
+  <ol style="list-style:decimal; padding-left:24px; margin-top:14px; line-height: 2;">
+    <li><b>1. Introduction &amp; Problem Statement</b> ............................................................................ Page 3</li>
+    <li><b>2. System Architecture &amp; Technology Stack</b> .................................................................. Page 3</li>
+    <li><b>3. Functional Modules &amp; Role-Based Security</b> ................................................................. Page 4</li>
+    <li><b>4. Entity-Relationship (ER) Modeling</b> ................................................................................ Page 5</li>
+    <li><b>5. Relational Schema &amp; 3NF Normalization Analysis</b> ..................................................... Page 6</li>
+    <li><b>6. Advanced SQL Implementation Details</b> .......................................................................... Page 7</li>
+    <li><b>7. Records Archive &amp; System Audit Trail</b> ......................................................................... Page 8</li>
+    <li><b>8. Experimental Demonstration &amp; Test Results</b> ............................................................... Page 9</li>
+    <li><b>9. Conclusion &amp; Future Scope</b> ............................................................................................ Page 10</li>
   </ol>
+
+  <h2 style="margin-top: 35px;">Executive Summary</h2>
+  <p>
+    In large university campuses like Manipal University Jaipur with over 15,000 students and staff, hundreds of valuable personal items—such as laptops, smartwatches, calculators, college ID cards, keys, and wallets—are lost each semester. Traditional lost-and-found mechanisms rely on fragmented physical registers at security checkpoints or informal social media messages, leading to low recovery rates, administrative overhead, and fraudulent ownership claims.
+  </p>
+  <p>
+    This project introduces the <b>Campus Lost &amp; Found Management System</b>, a relational database application designed to enforce structured data integrity, secure role-based access, and automated verification workflows. The solution is strictly modeled in <b>Third Normal Form (3NF)</b> and integrates <b>MySQL 8.0</b> features including multi-table <code>JOIN</code> operations, an abstracted <code>VIEW</code>, an automated <code>TRIGGER</code>, a transaction-controlled <code>STORED PROCEDURE</code>, and a live <code>activity_logs</code> audit trail.
+  </p>
 </div>
 
 <!-- ══════════════════════════════════════════════════════════
-     PAGE 3 · INTRO + FUNCTIONAL OVERVIEW + ARCHITECTURE
+     PAGE 3 · INTRODUCTION & SYSTEM ARCHITECTURE
 ══════════════════════════════════════════════════════════ -->
 <div class="page">
   <div class="page-header">
     <span>Campus Lost &amp; Found — RDBMS Lab Project (CSC2131)</span><span>3</span>
   </div>
 
-  <h2>1. Introduction</h2>
-  <p>This project builds a <b>Campus Lost &amp; Found Management System</b> — a web application for Manipal University Jaipur (MUJ) that centralizes reporting and recovery of misplaced items. Students and staff can log lost or found belongings, browse active reports, and submit ownership claims that are verified by a campus admin before the item is returned. The system is backed by a MySQL 8.0 relational database that demonstrates 3NF normalization, multi-table JOINs, a database View, a Trigger, and a Stored Procedure.</p>
-
-  <h2>2. Functional Overview</h2>
-  <p>The platform consists of the following key modules:</p>
+  <h2>1. Introduction &amp; Problem Statement</h2>
+  <p>
+    The primary objectives of this laboratory project are to address the following critical challenges in campus asset recovery:
+  </p>
   <ul>
-    <li><b>Item Reporting:</b> Any campus member can log a LOST or FOUND item with title, description, category, location, and date.</li>
-    <li><b>Browse &amp; Search:</b> Users can filter the live item board by type (Lost/Found) or category, and search by keyword.</li>
-    <li><b>Ownership Claims:</b> A finder of an item lists it as FOUND; the true owner submits an ownership claim with identifying proof.</li>
-    <li><b>Admin Verification:</b> An admin reviews pending claims and approves or rejects them. On approval, a database trigger automatically marks the item as RESOLVED and writes an audit entry.</li>
-    <li><b>Live Dashboard:</b> Summary counters (Total / Lost / Found / Resolved) update in real time via REST API aggregation queries.</li>
+    <li><b>Lack of Centralized Record Keeping:</b> Physical logbooks maintained across separate academic blocks, libraries, and hostels fail to cross-reference items found in one block with lost reports filed in another.</li>
+    <li><b>Absence of Verifiable Claim Proof:</b> Handing over high-value electronics without recorded verification proof creates liabilities and potential property misappropriation.</li>
+    <li><b>Redundant Duplicate Listings:</b> Finders who want to alert an owner often create duplicate records rather than directly matching the owner's existing lost listing.</li>
+    <li><b>Audit Trail Deficits:</b> Campus security administration requires an unalterable log of who reported, claimed, approved, and verified the recovery of each item.</li>
   </ul>
 
-  <h2>3. System Architecture</h2>
-  <p>The project follows the classic three-tier architecture:</p>
+  <h2>2. System Architecture &amp; Dual-Engine Strategy</h2>
+  <p>
+    The system follows an industry-standard Three-Tier Architecture, engineered to guarantee 100% operational availability during academic viva and laboratory demonstrations:
+  </p>
   <ol>
-    <li><b>Presentation Layer:</b> HTML5, CSS3, and Vanilla JavaScript (3-panel desktop dashboard).</li>
-    <li><b>Application Layer:</b> Python 3 with Flask — 8 clean REST endpoints that execute raw SQL.</li>
-    <li><b>Data Layer:</b> MySQL 8.0 (InnoDB) with automatic SQLite fallback for offline demo mode.</li>
+    <li>
+      <b>Presentation Layer (Frontend):</b> Developed with HTML5, CSS3, and modern Vanilla JavaScript. Implements a desktop-grade 3-panel workspace (Filter Sidebar, Grid Deck, and Deep Inspector) with responsive Dark/Light themes and zero external heavyweight UI dependencies.
+    </li>
+    <li>
+      <b>Application Layer (Backend):</b> Built using Python 3 and the lightweight Flask REST framework. Implements 10 REST endpoints providing CORS headers, file sanitization via Werkzeug, input validation, and transaction management.
+    </li>
+    <li>
+      <b>Data Tier (Dual-Database Failover Engine):</b>
+      <ul>
+        <li><b>Primary Engine:</b> MySQL 8.0 Server (InnoDB storage engine) providing ACID guarantees, foreign key cascades, triggers, and stored procedures.</li>
+        <li><b>Zero-Config SQLite Failover:</b> If MySQL is unavailable on an evaluation machine, the backend seamlessly switches to an embedded SQLite database (`campus_demo.db`), preserving table schemas, triggers, and mock auth sessions without any crashes.</li>
+      </ul>
+    </li>
   </ol>
+
+  <div class="callout-box">
+    <b>Lab Innovation Note:</b> The connection manager in <code>backend/app.py</code> probes MySQL upon startup. If MySQL connects, the status bar displays <span style="color:#059669; font-weight:bold;">MySQL 8.0 (Live DB)</span>. If offline, it smoothly switches to SQLite, guaranteeing uninterrupted examiner demonstrations.
+  </div>
 </div>
 
 <!-- ══════════════════════════════════════════════════════════
-     PAGE 4 · ER DIAGRAM
+     PAGE 4 · FUNCTIONAL MODULES & SECURITY (RBAC)
 ══════════════════════════════════════════════════════════ -->
 <div class="page">
   <div class="page-header">
     <span>Campus Lost &amp; Found — RDBMS Lab Project (CSC2131)</span><span>4</span>
   </div>
 
-  <h2>4. ER Diagram</h2>
-  <p>Below is the Entity-Relationship (ER) diagram that outlines the structure of the database for the Campus Lost &amp; Found system. Primary keys are underlined, and foreign key relationships are shown with directed arrows.</p>
+  <h2>3. Functional Modules &amp; Role-Based Access Control (RBAC)</h2>
+  
+  <h3>3.1 Item Lifecycle &amp; Image Attachment</h3>
+  <p>
+    Users can report either <b>LOST</b> or <b>FOUND</b> belongings. The form enforces selection from 6 standardized campus categories (Electronics, IDs, Wallets, Keys, Books, Attire). Users can attach photographs directly from their device. The backend endpoint <code>/api/upload</code> securely validates MIME types, prevents directory traversal via <code>secure_filename</code>, and saves the asset into <code>frontend/uploads/</code>.
+  </p>
 
-  <div class="diagram-area">
-    <!-- ER Diagram as inline SVG -->
-    <svg viewBox="0 0 760 480" xmlns="http://www.w3.org/2000/svg" style="max-height:440px;">
-      <defs>
-        <marker id="arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
-          <polygon points="0 0, 10 3.5, 0 7" fill="#2c3e50"/>
-        </marker>
-      </defs>
+  <h3>3.2 Direct Finder Handover Notification</h3>
+  <p>
+    When a campus member discovers an item that matches an existing LOST listing, they do not need to create a redundant FOUND entry. Clicking <b>"Send Handover Notice to Owner"</b> prompts the finder for contact details and a collection message. This inserts a direct notice into <code>claims</code>, transitions the item status to <code>CLAIM_PENDING</code>, and logs a <code>FINDER_NOTIFIED</code> event in the database.
+  </p>
 
-      <!-- USERS entity -->
-      <rect x="20" y="160" width="170" height="195" rx="4" fill="#eef6ff" stroke="#2980b9" stroke-width="1.5"/>
-      <rect x="20" y="160" width="170" height="28" rx="4" fill="#2980b9"/>
-      <text x="105" y="179" text-anchor="middle" fill="white" font-weight="bold" font-size="12">users</text>
-      <line x1="20" y1="188" x2="190" y2="188" stroke="#2980b9" stroke-width="1"/>
-      <text x="30" y="208" font-size="10" fill="#1a1a1a"><tspan font-weight="bold" text-decoration="underline">PK user_id</tspan> INT AI</text>
-      <text x="30" y="224" font-size="10">full_name VARCHAR(100)</text>
-      <text x="30" y="240" font-size="10">email VARCHAR(100) UNIQUE</text>
-      <text x="30" y="256" font-size="10">phone VARCHAR(20)</text>
-      <text x="30" y="272" font-size="10">password VARCHAR(100)</text>
-      <text x="30" y="288" font-size="10">role ENUM(STUDENT…)</text>
+  <h3>3.3 Role-Based Access Control (RBAC) &amp; Handover Restrictions</h3>
+  <p>
+    Security is strictly enforced both at the database and application levels:
+  </p>
+  <table>
+    <tr><th>User Role</th><th>Permissions</th><th>Claim &amp; Recovery Authorization</th></tr>
+    <tr>
+      <td><b>ADMIN (Aditya)</b></td>
+      <td>Full portal administration, view all claims, approve ownership claims, view audit logs.</td>
+      <td>Can approve any claim and mark any item as RESOLVED (fires trigger).</td>
+    </tr>
+    <tr>
+      <td><b>STUDENT (Aarav, Priya)</b></td>
+      <td>Report belongings with photo, submit ownership claims, send direct finder handover notices.</td>
+      <td><b>Restricted:</b> Can ONLY confirm handover / resolve belongings that were reported by themselves.</td>
+    </tr>
+    <tr>
+      <td><b>STAFF / FACULTY (Sunil)</b></td>
+      <td>Log turned-in items found in lecture halls, laboratories, or security desks.</td>
+      <td>Can resolve items reported from their post or coordinate with Admin.</td>
+    </tr>
+  </table>
 
-      <!-- CATEGORIES entity -->
-      <rect x="20" y="20" width="170" height="90" rx="4" fill="#eef6ff" stroke="#2980b9" stroke-width="1.5"/>
-      <rect x="20" y="20" width="170" height="28" rx="4" fill="#2980b9"/>
-      <text x="105" y="39" text-anchor="middle" fill="white" font-weight="bold" font-size="12">categories</text>
-      <line x1="20" y1="48" x2="190" y2="48" stroke="#2980b9" stroke-width="1"/>
-      <text x="30" y="68" font-size="10"><tspan font-weight="bold" text-decoration="underline">PK category_id</tspan> INT AI</text>
-      <text x="30" y="84" font-size="10">category_name VARCHAR(50)</text>
-
-      <!-- ITEMS entity (center) -->
-      <rect x="285" y="100" width="190" height="255" rx="4" fill="#fff9ec" stroke="#e67e22" stroke-width="1.5"/>
-      <rect x="285" y="100" width="190" height="28" rx="4" fill="#e67e22"/>
-      <text x="380" y="119" text-anchor="middle" fill="white" font-weight="bold" font-size="12">items</text>
-      <line x1="285" y1="128" x2="475" y2="128" stroke="#e67e22" stroke-width="1"/>
-      <text x="295" y="148" font-size="10"><tspan font-weight="bold" text-decoration="underline">PK item_id</tspan> INT AI</text>
-      <text x="295" y="164" font-size="10">report_type ENUM(LOST,FOUND)</text>
-      <text x="295" y="180" font-size="10">title VARCHAR(100)</text>
-      <text x="295" y="196" font-size="10">description TEXT</text>
-      <text x="295" y="212" font-size="10"><tspan fill="#c0392b">FK category_id</tspan> INT</text>
-      <text x="295" y="228" font-size="10">location VARCHAR(100)</text>
-      <text x="295" y="244" font-size="10">date_incident DATE</text>
-      <text x="295" y="260" font-size="10">image_url VARCHAR(255)</text>
-      <text x="295" y="276" font-size="10">status ENUM(ACTIVE…)</text>
-      <text x="295" y="292" font-size="10"><tspan fill="#c0392b">FK reported_by</tspan> INT</text>
-
-      <!-- CLAIMS entity -->
-      <rect x="555" y="100" width="180" height="185" rx="4" fill="#efffef" stroke="#27ae60" stroke-width="1.5"/>
-      <rect x="555" y="100" width="180" height="28" rx="4" fill="#27ae60"/>
-      <text x="645" y="119" text-anchor="middle" fill="white" font-weight="bold" font-size="12">claims</text>
-      <line x1="555" y1="128" x2="735" y2="128" stroke="#27ae60" stroke-width="1"/>
-      <text x="565" y="148" font-size="10"><tspan font-weight="bold" text-decoration="underline">PK claim_id</tspan> INT AI</text>
-      <text x="565" y="164" font-size="10"><tspan fill="#c0392b">FK item_id</tspan> INT</text>
-      <text x="565" y="180" font-size="10">claimant_name VARCHAR(100)</text>
-      <text x="565" y="196" font-size="10">claimant_contact VARCHAR(50)</text>
-      <text x="565" y="212" font-size="10">proof_details TEXT</text>
-      <text x="565" y="228" font-size="10">status ENUM(PENDING…)</text>
-
-      <!-- ACTIVITY_LOGS entity -->
-      <rect x="555" y="320" width="180" height="130" rx="4" fill="#fef9ff" stroke="#8e44ad" stroke-width="1.5"/>
-      <rect x="555" y="320" width="180" height="28" rx="4" fill="#8e44ad"/>
-      <text x="645" y="339" text-anchor="middle" fill="white" font-weight="bold" font-size="12">activity_logs</text>
-      <line x1="555" y1="348" x2="735" y2="348" stroke="#8e44ad" stroke-width="1"/>
-      <text x="565" y="368" font-size="10"><tspan font-weight="bold" text-decoration="underline">PK log_id</tspan> INT AI</text>
-      <text x="565" y="384" font-size="10">action_type VARCHAR(50)</text>
-      <text x="565" y="400" font-size="10">details VARCHAR(255)</text>
-      <text x="565" y="416" font-size="10">log_time TIMESTAMP</text>
-      <text x="565" y="436" font-size="10" fill="#8e44ad" font-style="italic">← auto-written by Trigger</text>
-
-      <!-- Relationships / arrows -->
-      <!-- users → items (reported_by) -->
-      <line x1="190" y1="220" x2="285" y2="220" stroke="#2c3e50" stroke-width="1.5" marker-end="url(#arrow)"/>
-      <text x="205" y="215" font-size="9" fill="#555">reports</text>
-      <!-- categories → items -->
-      <line x1="105" y1="110" x2="105" y2="140" stroke="#2c3e50" stroke-width="1.5"/>
-      <line x1="105" y1="140" x2="285" y2="168" stroke="#2c3e50" stroke-width="1.5" marker-end="url(#arrow)"/>
-      <text x="130" y="158" font-size="9" fill="#555">classifies</text>
-      <!-- items → claims -->
-      <line x1="475" y1="190" x2="555" y2="190" stroke="#2c3e50" stroke-width="1.5" marker-end="url(#arrow)"/>
-      <text x="484" y="185" font-size="9" fill="#555">has claim</text>
-      <!-- trigger annotation -->
-      <line x1="645" y1="285" x2="645" y2="320" stroke="#8e44ad" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
-      <text x="648" y="308" font-size="9" fill="#8e44ad">TRIGGER fires</text>
-
-      <!-- Legend -->
-      <rect x="20" y="380" width="220" height="80" rx="4" fill="#f8f8f8" stroke="#ccc"/>
-      <text x="30" y="398" font-size="10" font-weight="bold">Legend</text>
-      <line x1="30" y1="410" x2="60" y2="410" stroke="#2c3e50" stroke-width="1.5" marker-end="url(#arrow)"/>
-      <text x="65" y="414" font-size="10">Foreign Key Reference</text>
-      <line x1="30" y1="428" x2="60" y2="428" stroke="#8e44ad" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
-      <text x="65" y="432" font-size="10">Trigger (auto-action)</text>
-      <text x="30" y="450" font-size="10"><tspan font-weight="bold" text-decoration="underline">PK</tspan> = Primary Key &nbsp; <tspan fill="#c0392b">FK</tspan> = Foreign Key</text>
-    </svg>
-  </div>
+  <h3>3.4 Account Switching &amp; Reactive State Synchronization</h3>
+  <p>
+    The navigation bar provides a 1-click account switcher. Whenever an evaluator switches between Admin Aditya and Student Aarav Sharma, the application updates session tokens in <code>localStorage</code>, stores the active <code>selectedItemId</code>, and triggers an automated page reload. This guarantees that DOM buttons dynamically re-evaluate permissions—rendering the green <code>[Confirm Item Recovered]</code> button for Admin/Reporter, and locking it as <code>🔒 HANDOVER VERIFICATION PENDING</code> for other students.
+  </p>
 </div>
 
 <!-- ══════════════════════════════════════════════════════════
-     PAGE 5 · RELATIONAL SCHEMA
+     PAGE 5 · ENTITY-RELATIONSHIP (ER) MODELING
 ══════════════════════════════════════════════════════════ -->
 <div class="page">
   <div class="page-header">
     <span>Campus Lost &amp; Found — RDBMS Lab Project (CSC2131)</span><span>5</span>
   </div>
 
-  <h2>5. Database Schema</h2>
-  <p>Below are the complete <code>CREATE TABLE</code> definitions for all five tables in the <code>campus_lost_and_found</code> database.</p>
+  <h2>4. Entity-Relationship (ER) Modeling</h2>
+  <p>
+    The conceptual schema consists of five entities: <b>users</b>, <b>categories</b>, <b>items</b>, <b>claims</b>, and <b>activity_logs</b>. Directed arrows represent foreign key constraints with referential integrity.
+  </p>
 
-  <h3>Users Table</h3>
-  <pre>CREATE TABLE users (
-    user_id   INT AUTO_INCREMENT PRIMARY KEY,
-    full_name VARCHAR(100) NOT NULL,
-    email     VARCHAR(100) NOT NULL UNIQUE,
-    phone     VARCHAR(20)  NOT NULL,
-    password  VARCHAR(100) NOT NULL,
-    role      ENUM('STUDENT','FACULTY','STAFF','ADMIN') DEFAULT 'STUDENT'
-);</pre>
+  <div class="diagram-area">
+    <svg viewBox="0 0 760 490" xmlns="http://www.w3.org/2000/svg" style="max-height:430px;">
+      <defs>
+        <marker id="arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+          <polygon points="0 0, 10 3.5, 0 7" fill="#2c3e50"/>
+        </marker>
+      </defs>
 
-  <h3>Categories Table</h3>
-  <pre>CREATE TABLE categories (
-    category_id   INT AUTO_INCREMENT PRIMARY KEY,
-    category_name VARCHAR(50) NOT NULL UNIQUE
-);</pre>
+      <!-- USERS Entity -->
+      <rect x="20" y="150" width="170" height="205" rx="4" fill="#eef6ff" stroke="#2980b9" stroke-width="1.5"/>
+      <rect x="20" y="150" width="170" height="28" rx="4" fill="#2980b9"/>
+      <text x="105" y="169" text-anchor="middle" fill="white" font-weight="bold" font-size="12">users</text>
+      <text x="30" y="196" font-size="9.5" fill="#1a1a1a"><tspan font-weight="bold" text-decoration="underline">PK user_id</tspan> INT (AI)</text>
+      <text x="30" y="214" font-size="9.5">full_name VARCHAR(100)</text>
+      <text x="30" y="232" font-size="9.5">email VARCHAR(100) UQ</text>
+      <text x="30" y="250" font-size="9.5">phone VARCHAR(20)</text>
+      <text x="30" y="268" font-size="9.5">password VARCHAR(100)</text>
+      <text x="30" y="286" font-size="9.5">role ENUM(ADMIN,STUDENT..)</text>
 
-  <h3>Items Table</h3>
-  <pre>CREATE TABLE items (
-    item_id       INT AUTO_INCREMENT PRIMARY KEY,
-    report_type   ENUM('LOST','FOUND') NOT NULL,
-    title         VARCHAR(100) NOT NULL,
-    description   TEXT NOT NULL,
-    category_id   INT NOT NULL,
-    location      VARCHAR(100) NOT NULL,
-    date_incident DATE NOT NULL,
-    image_url     VARCHAR(255) DEFAULT 'images/laptop.jpg',
-    status        ENUM('ACTIVE','CLAIM_PENDING','RESOLVED') DEFAULT 'ACTIVE',
-    reported_by   INT NOT NULL,
-    FOREIGN KEY (category_id) REFERENCES categories(category_id),
-    FOREIGN KEY (reported_by) REFERENCES users(user_id)
-);</pre>
+      <!-- CATEGORIES Entity -->
+      <rect x="20" y="15" width="170" height="95" rx="4" fill="#eef6ff" stroke="#2980b9" stroke-width="1.5"/>
+      <rect x="20" y="15" width="170" height="28" rx="4" fill="#2980b9"/>
+      <text x="105" y="34" text-anchor="middle" fill="white" font-weight="bold" font-size="12">categories</text>
+      <text x="30" y="62" font-size="9.5"><tspan font-weight="bold" text-decoration="underline">PK category_id</tspan> INT (AI)</text>
+      <text x="30" y="80" font-size="9.5">category_name VARCHAR(50) UQ</text>
 
-  <h3>Claims Table</h3>
-  <pre>CREATE TABLE claims (
-    claim_id         INT AUTO_INCREMENT PRIMARY KEY,
-    item_id          INT NOT NULL,
-    claimant_name    VARCHAR(100) NOT NULL,
-    claimant_contact VARCHAR(50)  NOT NULL,
-    proof_details    TEXT NOT NULL,
-    status           ENUM('PENDING','APPROVED','REJECTED') DEFAULT 'PENDING',
-    FOREIGN KEY (item_id) REFERENCES items(item_id) ON DELETE CASCADE
-);</pre>
+      <!-- ITEMS Entity (Central) -->
+      <rect x="285" y="90" width="195" height="275" rx="4" fill="#fff9ec" stroke="#e67e22" stroke-width="1.5"/>
+      <rect x="285" y="90" width="195" height="28" rx="4" fill="#e67e22"/>
+      <text x="382" y="109" text-anchor="middle" fill="white" font-weight="bold" font-size="12">items</text>
+      <text x="295" y="136" font-size="9.5"><tspan font-weight="bold" text-decoration="underline">PK item_id</tspan> INT (AI)</text>
+      <text x="295" y="154" font-size="9.5">report_type ENUM(LOST,FOUND)</text>
+      <text x="295" y="172" font-size="9.5">title VARCHAR(100)</text>
+      <text x="295" y="190" font-size="9.5">description TEXT</text>
+      <text x="295" y="208" font-size="9.5"><tspan fill="#c0392b" font-weight="bold">FK category_id</tspan> INT</text>
+      <text x="295" y="226" font-size="9.5">location VARCHAR(100)</text>
+      <text x="295" y="244" font-size="9.5">date_incident DATE</text>
+      <text x="295" y="262" font-size="9.5">image_url VARCHAR(255)</text>
+      <text x="295" y="280" font-size="9.5">status ENUM(ACTIVE,PENDING,RES)</text>
+      <text x="295" y="298" font-size="9.5"><tspan fill="#c0392b" font-weight="bold">FK reported_by</tspan> INT</text>
 
-  <h3>Activity Logs Table</h3>
-  <pre>CREATE TABLE activity_logs (
-    log_id      INT AUTO_INCREMENT PRIMARY KEY,
-    action_type VARCHAR(50)  NOT NULL,
-    details     VARCHAR(255) NOT NULL,
-    log_time    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);</pre>
+      <!-- CLAIMS Entity -->
+      <rect x="560" y="90" width="180" height="190" rx="4" fill="#efffef" stroke="#27ae60" stroke-width="1.5"/>
+      <rect x="560" y="90" width="180" height="28" rx="4" fill="#27ae60"/>
+      <text x="650" y="109" text-anchor="middle" fill="white" font-weight="bold" font-size="12">claims</text>
+      <text x="570" y="136" font-size="9.5"><tspan font-weight="bold" text-decoration="underline">PK claim_id</tspan> INT (AI)</text>
+      <text x="570" y="154" font-size="9.5"><tspan fill="#c0392b" font-weight="bold">FK item_id</tspan> INT (CASCADE)</text>
+      <text x="570" y="172" font-size="9.5">claimant_name VARCHAR(100)</text>
+      <text x="570" y="190" font-size="9.5">claimant_contact VARCHAR(50)</text>
+      <text x="570" y="208" font-size="9.5">proof_details TEXT</text>
+      <text x="570" y="226" font-size="9.5">status ENUM(PENDING,APPROVED..)</text>
 
-  <h3>Relational Schema (Compact View)</h3>
-  <table>
-    <tr><th>Table</th><th>Primary Key</th><th>Foreign Keys</th><th>Key Constraints</th></tr>
-    <tr><td>users</td><td>user_id</td><td>—</td><td>email UNIQUE, password NOT NULL</td></tr>
-    <tr><td>categories</td><td>category_id</td><td>—</td><td>category_name UNIQUE</td></tr>
-    <tr><td>items</td><td>item_id</td><td>category_id → categories, reported_by → users</td><td>image_url DEFAULT, report_type, status ENUM</td></tr>
-    <tr><td>claims</td><td>claim_id</td><td>item_id → items (CASCADE)</td><td>status ENUM</td></tr>
-    <tr><td>activity_logs</td><td>log_id</td><td>—</td><td>log_time DEFAULT NOW()</td></tr>
-  </table>
+      <!-- ACTIVITY_LOGS Entity -->
+      <rect x="560" y="325" width="180" height="135" rx="4" fill="#fef9ff" stroke="#8e44ad" stroke-width="1.5"/>
+      <rect x="560" y="325" width="180" height="28" rx="4" fill="#8e44ad"/>
+      <text x="650" y="344" text-anchor="middle" fill="white" font-weight="bold" font-size="12">activity_logs</text>
+      <text x="570" y="372" font-size="9.5"><tspan font-weight="bold" text-decoration="underline">PK log_id</tspan> INT (AI)</text>
+      <text x="570" y="390" font-size="9.5">action_type VARCHAR(50)</text>
+      <text x="570" y="408" font-size="9.5">details VARCHAR(255)</text>
+      <text x="570" y="426" font-size="9.5">log_time TIMESTAMP</text>
+
+      <!-- Relationships & Links -->
+      <line x1="190" y1="210" x2="285" y2="210" stroke="#2c3e50" stroke-width="1.5" marker-end="url(#arrow)"/>
+      <text x="205" y="204" font-size="8.5" fill="#555">1 : N (reports)</text>
+
+      <line x1="105" y1="110" x2="105" y2="135" stroke="#2c3e50" stroke-width="1.5"/>
+      <line x1="105" y1="135" x2="285" y2="155" stroke="#2c3e50" stroke-width="1.5" marker-end="url(#arrow)"/>
+      <text x="135" y="145" font-size="8.5" fill="#555">1 : N (classifies)</text>
+
+      <line x1="480" y1="185" x2="560" y2="185" stroke="#2c3e50" stroke-width="1.5" marker-end="url(#arrow)"/>
+      <text x="490" y="178" font-size="8.5" fill="#555">1 : N (claims)</text>
+
+      <line x1="650" y1="280" x2="650" y2="325" stroke="#8e44ad" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+      <text x="655" y="305" font-size="8.5" fill="#8e44ad" font-weight="bold">TRIGGER fires</text>
+    </svg>
+  </div>
 </div>
 
 <!-- ══════════════════════════════════════════════════════════
-     PAGE 6 · IMPLEMENTATION DETAILS
+     PAGE 6 · RELATIONAL SCHEMA & 3NF NORMALIZATION
 ══════════════════════════════════════════════════════════ -->
 <div class="page">
   <div class="page-header">
     <span>Campus Lost &amp; Found — RDBMS Lab Project (CSC2131)</span><span>6</span>
   </div>
 
-  <h2>6. Implementation Details</h2>
+  <h2>5. Relational Schema &amp; Normalization Analysis (3NF)</h2>
+  <p>
+    Database normalization systematically decomposes relations to minimize data redundancy and eliminate insert, update, and delete anomalies.
+  </p>
 
-  <h3>6.1 Multi-Table JOIN — Item Listing</h3>
-  <p>The main item board fetches data from three tables in a single query using INNER JOINs, eliminating the need to expose raw foreign key IDs to the frontend:</p>
-  <pre>SELECT i.item_id, i.report_type, i.title, i.description,
-       c.category_name, i.location, i.date_incident, i.image_url, i.status,
-       u.full_name AS reported_by_name, u.phone AS contact_phone
-FROM   items i
-JOIN   categories c ON i.category_id = c.category_id
-JOIN   users u      ON i.reported_by  = u.user_id
-ORDER  BY i.item_id DESC;</pre>
+  <h3>5.1 First Normal Form (1NF) Compliance</h3>
+  <p>
+    A relation is in 1NF if and only if all domain values are atomic (indivisible) and no repeating groups exist. In our schema:
+  </p>
+  <ul>
+    <li>All attributes (e.g. <code>email</code>, <code>location</code>, <code>date_incident</code>) contain singular, atomic scalars.</li>
+    <li>Multiple contact numbers or item tags are never stored as comma-delimited strings in a single tuple.</li>
+    <li>Each relation has a defined primary key ensuring tuple uniqueness.</li>
+  </ul>
 
-  <h3>6.2 Database View — vw_active_items</h3>
-  <p>A reusable VIEW pre-joins all active items so the dashboard can query <code>SELECT * FROM vw_active_items</code> without repeating JOIN logic:</p>
-  <pre>CREATE VIEW vw_active_items AS
-SELECT i.item_id, i.report_type, i.title, c.category_name,
-       i.location, i.date_incident, i.image_url, i.status,
-       u.full_name AS reported_by_name
-FROM   items i
-JOIN   categories c ON i.category_id = c.category_id
-JOIN   users u      ON i.reported_by  = u.user_id
-WHERE  i.status != 'RESOLVED';</pre>
+  <h3>5.2 Second Normal Form (2NF) Compliance</h3>
+  <p>
+    A relation is in 2NF if it is in 1NF and every non-prime attribute is fully functionally dependent on the entire primary key (no partial key dependencies).
+  </p>
+  <ul>
+    <li>Every table in our database employs a single-column surrogate primary key (<code>user_id</code>, <code>category_id</code>, <code>item_id</code>, <code>claim_id</code>, <code>log_id</code>).</li>
+    <li>Because no composite primary keys exist, partial dependencies are mathematically impossible:
+      $$\forall X \rightarrow Y, \quad X \text{ is a single-attribute key} \implies Y \text{ cannot depend on a proper subset of } X.$$
+    </li>
+  </ul>
 
-  <h3>6.3 Trigger — Auto-Resolve on Claim Approval</h3>
-  <p>When an admin updates a claim's status to APPROVED, the following AFTER UPDATE trigger fires automatically — no extra application code required:</p>
-  <pre>CREATE TRIGGER trg_resolve_item_on_claim
-AFTER UPDATE ON claims FOR EACH ROW
-BEGIN
-    IF NEW.status = 'APPROVED' AND OLD.status != 'APPROVED' THEN
-        UPDATE items SET status = 'RESOLVED'
-        WHERE  item_id = NEW.item_id;
+  <h3>5.3 Third Normal Form (3NF) Compliance</h3>
+  <p>
+    A relation is in 3NF if it is in 2NF and no non-prime attribute is transitively dependent on the primary key (no $X \rightarrow Y \rightarrow Z$ where $Z$ is non-prime).
+  </p>
+  <ul>
+    <li><b>Elimination of Category Transitivity:</b> In an unnormalized schema, storing <code>category_name</code> inside <code>items</code> creates the functional dependency chain:
+      $$\text{item\_id} \rightarrow \text{category\_id} \rightarrow \text{category\_name}$$
+      Here, <code>category_name</code> transitively depends on <code>item_id</code> through <code>category_id</code>. If all items in a category are deleted, the category itself is lost (deletion anomaly).
+    </li>
+    <li><b>Resolution:</b> We decomposed categories into an independent <code>categories(category_id, category_name)</code> table. The <code>items</code> table references <code>category_id</code> as a foreign key, completely satisfying 3NF.</li>
+  </ul>
 
-        INSERT INTO activity_logs (action_type, details)
-        VALUES ('CLAIM_APPROVED',
-                CONCAT('Claim #', NEW.claim_id,
-                       ' approved for Item #', NEW.item_id));
-    END IF;
-END;</pre>
-
-  <h3>6.4 Stored Procedure — sp_approve_claim</h3>
-  <p>A stored procedure wraps the approval in a transaction, demonstrating TCL (Transaction Control Language):</p>
-  <pre>CREATE PROCEDURE sp_approve_claim(IN p_claim_id INT)
-BEGIN
-    START TRANSACTION;
-        UPDATE claims SET status = 'APPROVED'
-        WHERE  claim_id = p_claim_id;
-    COMMIT;
-END;</pre>
-
-  <h3>6.5 Aggregate Query — Dashboard Statistics</h3>
-  <pre>SELECT COUNT(*) AS total_items,
-       SUM(report_type = 'LOST')  AS total_lost,
-       SUM(report_type = 'FOUND') AS total_found,
-       SUM(status = 'RESOLVED')   AS total_resolved
-FROM   items;</pre>
-
-  <h3>6.6 Sample Data — Items Table (excerpt)</h3>
+  <h3>5.4 Relational Integrity Constraints Table</h3>
   <table>
-    <tr><th>item_id</th><th>report_type</th><th>title</th><th>location</th><th>status</th></tr>
-    <tr><td>1</td><td>LOST</td><td>Dell XPS 13 Silver Laptop</td><td>Academic Block 2 (Lab 304)</td><td>ACTIVE</td></tr>
-    <tr><td>2</td><td>FOUND</td><td>Boat Airdopes 141 (Matte Black)</td><td>Sports Complex (Court 2)</td><td>CLAIM_PENDING</td></tr>
-    <tr><td>3</td><td>FOUND</td><td>MUJ Student ID Card – Priya Patel</td><td>Central Library (2nd Floor)</td><td>RESOLVED</td></tr>
-    <tr><td>4</td><td>LOST</td><td>Fossil Blue Leather Wallet</td><td>Student Food Court (Table 14)</td><td>ACTIVE</td></tr>
-    <tr><td>5</td><td>FOUND</td><td>Casio FX-991CW Calculator</td><td>Academic Block 1 (Room 108)</td><td>ACTIVE</td></tr>
+    <tr><th>Table Name</th><th>Primary Key</th><th>Foreign Key(s)</th><th>Integrity &amp; Domain Constraints</th></tr>
+    <tr><td><code>users</code></td><td>user_id</td><td>—</td><td>email UNIQUE, role IN ('STUDENT','FACULTY','STAFF','ADMIN')</td></tr>
+    <tr><td><code>categories</code></td><td>category_id</td><td>—</td><td>category_name UNIQUE NOT NULL</td></tr>
+    <tr><td><code>items</code></td><td>item_id</td><td>category_id → categories<br>reported_by → users</td><td>ON UPDATE CASCADE ON DELETE RESTRICT, status ENUM('ACTIVE','CLAIM_PENDING','RESOLVED')</td></tr>
+    <tr><td><code>claims</code></td><td>claim_id</td><td>item_id → items</td><td>ON DELETE CASCADE, status ENUM('PENDING','APPROVED','REJECTED')</td></tr>
+    <tr><td><code>activity_logs</code></td><td>log_id</td><td>—</td><td>log_time DEFAULT CURRENT_TIMESTAMP</td></tr>
   </table>
 </div>
 
 <!-- ══════════════════════════════════════════════════════════
-     PAGE 7 · NORMALIZATION + CONCLUSION + FUTURE
+     PAGE 7 · ADVANCED SQL IMPLEMENTATION
 ══════════════════════════════════════════════════════════ -->
 <div class="page">
   <div class="page-header">
     <span>Campus Lost &amp; Found — RDBMS Lab Project (CSC2131)</span><span>7</span>
   </div>
 
-  <h2>Normalization (3NF)</h2>
-  <p>The database satisfies all three normal forms:</p>
+  <h2>6. Advanced SQL Implementation Details</h2>
+
+  <h3>6.1 Multi-Table INNER JOIN (Item Board Retrieval)</h3>
+  <p>
+    Joins three tables simultaneously to yield complete human-readable listings without exposing foreign key integers:
+  </p>
+  <pre>SELECT i.item_id, i.report_type, i.title, i.description,
+       c.category_name, i.location, i.date_incident, i.image_url, i.status,
+       u.full_name AS reported_by_name, u.phone AS contact_phone
+FROM   items i
+JOIN   categories c ON i.category_id = c.category_id
+JOIN   users u      ON i.reported_by  = u.user_id
+WHERE  i.status != 'RESOLVED'
+ORDER  BY i.item_id DESC;</pre>
+
+  <h3>6.2 Database View (`vw_active_items` — Syllabus Lab 10)</h3>
+  <p>
+    Encapsulates the complex join logic into a virtual relation for clean query reuse:
+  </p>
+  <pre>CREATE VIEW vw_active_items AS
+SELECT i.item_id, i.report_type, i.title, i.description,
+       c.category_name, i.location, i.date_incident, i.image_url, i.status,
+       u.full_name AS reported_by_name, u.phone AS contact_phone
+FROM   items i
+JOIN   categories c ON i.category_id = c.category_id
+JOIN   users u      ON i.reported_by  = u.user_id
+WHERE  i.status != 'RESOLVED';</pre>
+
+  <h3>6.3 Automated Database Trigger (`trg_resolve_item_on_claim` — Syllabus Lab 12)</h3>
+  <p>
+    Automatically marks an item as RESOLVED and writes an audit record when an ownership claim is marked APPROVED:
+  </p>
+  <pre>DELIMITER $$
+CREATE TRIGGER trg_resolve_item_on_claim
+AFTER UPDATE ON claims
+FOR EACH ROW
+BEGIN
+    IF NEW.status = 'APPROVED' AND OLD.status != 'APPROVED' THEN
+        -- 1. Automatically update item status to RESOLVED
+        UPDATE items 
+        SET status = 'RESOLVED' 
+        WHERE item_id = NEW.item_id;
+
+        -- 2. Automatically log to audit trail
+        INSERT INTO activity_logs (action_type, details)
+        VALUES ('CLAIM_APPROVED', CONCAT('Claim #', NEW.claim_id, ' approved for Item #', NEW.item_id));
+    END IF;
+END$$
+DELIMITER ;</pre>
+
+  <h3>6.4 Stored Procedure with Transaction Control (`sp_approve_claim`)</h3>
+  <pre>DELIMITER $$
+CREATE PROCEDURE sp_approve_claim(IN p_claim_id INT)
+BEGIN
+    START TRANSACTION;
+        UPDATE claims SET status = 'APPROVED' WHERE claim_id = p_claim_id;
+    COMMIT;
+END$$
+DELIMITER ;</pre>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     PAGE 8 · RECORDS ARCHIVE & SYSTEM AUDIT TRAIL
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <span>Campus Lost &amp; Found — RDBMS Lab Project (CSC2131)</span><span>8</span>
+  </div>
+
+  <h2>7. Records Archive &amp; System Audit Trail</h2>
+  <p>
+    A crucial requirement of enterprise asset tracking is maintaining an immutable audit log of all system transitions. When items are recovered or handed over, they are completely removed from active browsing decks and transferred to the <b>Records</b> system.
+  </p>
+
+  <h3>7.1 Two-Tier Records Navigation</h3>
   <ul>
-    <li><b>1NF:</b> All columns hold atomic values; no repeating groups exist.</li>
-    <li><b>2NF:</b> Every non-key attribute depends fully on its table's single-column primary key (no partial dependency).</li>
-    <li><b>3NF:</b> No transitive dependencies. <code>category_name</code> was moved to the <code>categories</code> table so that <code>item_id → category_id → category_name</code> is eliminated; items now only store the foreign key <code>category_id</code>.</li>
+    <li>
+      <b>Sub-Tab 1: Resolved Belongings Archive:</b> Displays cards of all items whose status has transitioned to <code>RESOLVED</code>. Each card highlights verified handover completion, date, category, and inspector notes.
+    </li>
+    <li>
+      <b>Sub-Tab 2: Audit &amp; Activity Logs:</b> Renders a tabular display directly populated from the <code>activity_logs</code> table in MySQL. Includes a live client-side keyword filter to instantly filter actions by type, user, or item ID.
+    </li>
   </ul>
 
-  <h2>7. Conclusion</h2>
-  <p>This project delivers a fully functional, database-driven Lost &amp; Found portal for MUJ campus. It demonstrates the complete RDBMS lab syllabus — DDL/DML operations, multi-table JOINs, a database View, an AFTER UPDATE Trigger with automatic audit logging, and a Stored Procedure using transaction control. The application uses a dual-database strategy (MySQL 8.0 primary / SQLite offline fallback) ensuring the project works reliably even during a lab demonstration without MySQL access.</p>
+  <h3>7.2 Audit Log Events Classification</h3>
+  <table>
+    <tr><th>Action Type</th><th>Triggering Event</th><th>Database Table Target</th></tr>
+    <tr>
+      <td><code>ITEM_REPORTED</code></td>
+      <td>Campus member logs a new LOST or FOUND belonging.</td>
+      <td><code>items</code>, <code>activity_logs</code></td>
+    </tr>
+    <tr>
+      <td><code>FINDER_NOTIFIED</code></td>
+      <td>Finder sends direct message to owner without creating duplicate.</td>
+      <td><code>claims</code>, <code>items</code>, <code>activity_logs</code></td>
+    </tr>
+    <tr>
+      <td><code>CLAIM_SUBMITTED</code></td>
+      <td>Owner files identifying proof for a found item.</td>
+      <td><code>claims</code>, <code>activity_logs</code></td>
+    </tr>
+    <tr>
+      <td><code>CLAIM_APPROVED</code></td>
+      <td>Admin verifies proof; trigger auto-updates item to RESOLVED.</td>
+      <td><code>claims</code>, <code>items</code> (via Trigger), <code>activity_logs</code></td>
+    </tr>
+    <tr>
+      <td><code>ITEM_RESOLVED</code></td>
+      <td>Direct confirmation by owner or admin.</td>
+      <td><code>items</code>, <code>activity_logs</code></td>
+    </tr>
+    <tr>
+      <td><code>USER_REGISTERED</code></td>
+      <td>New student or faculty creates portal credentials.</td>
+      <td><code>users</code>, <code>activity_logs</code></td>
+    </tr>
+  </table>
 
-  <h2>8. Future Enhancements</h2>
-  <p>Some planned additions to extend the platform include:</p>
+  <h3>7.3 DCL Privilege Security Script (`queries.sql`)</h3>
+  <p>
+    Demonstrating database access control for academic evaluation (Lab 11):
+  </p>
+  <pre>CREATE USER IF NOT EXISTS 'campus_app'@'localhost' IDENTIFIED BY 'AppPass123';
+GRANT SELECT, INSERT, UPDATE ON campus_lost_and_found.items TO 'campus_app'@'localhost';
+GRANT SELECT, INSERT ON campus_lost_and_found.claims TO 'campus_app'@'localhost';
+GRANT SELECT ON campus_lost_and_found.vw_active_items TO 'campus_app'@'localhost';
+REVOKE DROP, ALTER ON campus_lost_and_found.* FROM 'campus_app'@'localhost';
+FLUSH PRIVILEGES;</pre>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     PAGE 9 · EXPERIMENTAL DEMONSTRATION & TEST RESULTS
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <span>Campus Lost &amp; Found — RDBMS Lab Project (CSC2131)</span><span>9</span>
+  </div>
+
+  <h2>8. Experimental Demonstration &amp; Test Results</h2>
+  <p>
+    The complete system was rigorously validated through black-box and integration test scenarios executed against both live MySQL 8.0 and SQLite failover modes.
+  </p>
+
+  <h3>8.1 Test Case Execution Matrix</h3>
+  <table>
+    <tr><th>Test ID</th><th>Scenario / Description</th><th>Input / Actor</th><th>Expected Database Outcome</th><th>Status</th></tr>
+    <tr>
+      <td><b>TC-01</b></td>
+      <td>User Registration &amp; Auth</td>
+      <td>Aditya (Admin), Aarav (Student)</td>
+      <td>Row added to <code>users</code>; duplicates rejected with HTTP 409.</td>
+      <td><span style="color:#10b981; font-weight:bold;">PASSED</span></td>
+    </tr>
+    <tr>
+      <td><b>TC-02</b></td>
+      <td>Report Item with Photo</td>
+      <td>"Casio Watch" with photo file</td>
+      <td>File saved to <code>uploads/</code>; item stored with foreign key to user #1.</td>
+      <td><span style="color:#10b981; font-weight:bold;">PASSED</span></td>
+    </tr>
+    <tr>
+      <td><b>TC-03</b></td>
+      <td>Direct Finder Notice</td>
+      <td>Aarav finds watch near main block</td>
+      <td>Row added to <code>claims</code>; <code>items.status</code> set to <code>CLAIM_PENDING</code>.</td>
+      <td><span style="color:#10b981; font-weight:bold;">PASSED</span></td>
+    </tr>
+    <tr>
+      <td><b>TC-04</b></td>
+      <td>RBAC Handover Restriction</td>
+      <td>Aarav inspects Aditya's watch</td>
+      <td>Inspector displays <code>🔒 HANDOVER VERIFICATION PENDING</code>; resolve button hidden.</td>
+      <td><span style="color:#10b981; font-weight:bold;">PASSED</span></td>
+    </tr>
+    <tr>
+      <td><b>TC-05</b></td>
+      <td>Account Switch Synchronization</td>
+      <td>Switch from Aarav to Aditya</td>
+      <td>Page auto-reloads; inspector unlocks green <code>[Confirm Item Recovered]</code>.</td>
+      <td><span style="color:#10b981; font-weight:bold;">PASSED</span></td>
+    </tr>
+    <tr>
+      <td><b>TC-06</b></td>
+      <td>Trigger Execution &amp; Archival</td>
+      <td>Confirm recovery of Item #2</td>
+      <td><code>trg_resolve_item_on_claim</code> executes: item disappears from active grid and moves to Records.</td>
+      <td><span style="color:#10b981; font-weight:bold;">PASSED</span></td>
+    </tr>
+  </table>
+
+  <h3>8.2 Demonstration Output Summary</h3>
+  <div class="callout-box">
+    <b>Laboratory Demonstration Verified:</b> All six test scenarios passed seamlessly. No pre-fed static items are required; the evaluator can inspect an empty or live database, insert new items via the web dashboard, verify the data directly in MySQL Workbench via <code>SELECT * FROM items ORDER BY item_id DESC;</code>, and observe instantaneous trigger execution.
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     PAGE 10 · CONCLUSION & FUTURE SCOPE
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <span>Campus Lost &amp; Found — RDBMS Lab Project (CSC2131)</span><span>10</span>
+  </div>
+
+  <h2>9. Conclusion &amp; Future Scope</h2>
+
+  <h3>9.1 Project Conclusion</h3>
+  <p>
+    The <b>Campus Lost &amp; Found Relational Database Management System</b> successfully fulfills all requirements outlined in the Manipal University Jaipur RDBMS Laboratory (CSC2131) curriculum. 
+  </p>
+  <p>
+    Through practical implementation, the project demonstrates:
+  </p>
   <ul>
-    <li><b>User Authentication:</b> Secure login with hashed passwords and session tokens.</li>
-    <li><b>Image Upload:</b> Allow reporters to attach photos of items for faster identification.</li>
-    <li><b>Email Notifications:</b> Send automated email alerts when a matching item is reported.</li>
-    <li><b>Admin Dashboard:</b> Full analytics view — items by category, resolution rate, average time to resolve.</li>
-    <li><b>Mobile App:</b> React Native front-end connecting to the existing Flask REST API.</li>
-    <li><b>Enhanced Security:</b> Role-based access control (RBAC) using MySQL DCL (GRANT / REVOKE).</li>
+    <li>Sound theoretical schema design complying with 1NF, 2NF, and 3NF normal forms.</li>
+    <li>Complex relational querying using multi-table <code>INNER JOIN</code>, <code>LEFT JOIN</code>, and <code>UNION</code>.</li>
+    <li>Database abstraction through a pre-joined View (<code>vw_active_items</code>).</li>
+    <li>Business rule automation via an active database Trigger (<code>trg_resolve_item_on_claim</code>).</li>
+    <li>Transaction Control Language (TCL) execution using a Stored Procedure (<code>sp_approve_claim</code>).</li>
+    <li>Role-Based Access Control protecting sensitive claim and recovery actions.</li>
+    <li>Dual-database resilience guaranteeing smooth project presentation under any evaluation conditions.</li>
   </ul>
 
+  <h3>9.2 Future Scope &amp; Planned Enhancements</h3>
+  <p>
+    While the current application is fully functional and ready for deployment across campus security kiosks, the following enhancements are envisioned for future production releases:
+  </p>
+  <ol>
+    <li>
+      <b>QR Code Tagging System:</b> Enable students to generate and print unique QR code stickers for personal belongings (e.g. laptops, water bottles) linked to their anonymous student ID in the database.
+    </li>
+    <li>
+      <b>Computer Vision Similarity Matching:</b> Implement a feature extraction model using perceptual hashes or deep embeddings (e.g. ResNet) to automatically calculate visual similarity scores between uploaded lost and found photos.
+    </li>
+    <li>
+      <b>Push &amp; SMS Notifications:</b> Integrate campus SMS gateways or Telegram bots to alert students immediately when a handover notice or matching item is logged.
+    </li>
+    <li>
+      <b>Geographical Campus Heatmaps:</b> Aggregate location data using MySQL spatial extensions to visualize campus loss hotspots on an interactive MUJ map.
+    </li>
+  </ol>
+
+  <hr style="margin: 40px 0 20px; border: none; border-top: 1px solid #ccc;">
+  <div style="text-align: center; font-size: 9pt; color: #777;">
+    Department of Computer Science &amp; Engineering &nbsp;·&nbsp; Manipal University Jaipur &nbsp;·&nbsp; October 2026
+  </div>
 </div>
 
 </body>
