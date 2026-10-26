@@ -707,8 +707,6 @@ function selectItem(itemId) {
       </div>
     `;
   }
-    `;
-  }
 
   const inspector = document.getElementById('inspectorBody');
   inspector.innerHTML = `
@@ -1110,7 +1108,6 @@ async function showAdminView(navEl) {
   document.getElementById('inspectorHeaderTitle').innerText = 'ADMIN CONTROL';
   document.getElementById('inspectorHeaderSub').innerText = 'Ownership Verification';
 
-  const deck = document.getElementById('itemsDeck');
   deck.innerHTML = '';
 
   if (claims.length === 0) {
@@ -1491,4 +1488,28 @@ function highlightNav(el) {
   document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
   if (el) el.classList.add('active');
 }
+
+// Explicit window bindings for inline HTML onclick handlers
+window.openLoginModal = openLoginModal;
+window.closeLoginModal = closeLoginModal;
+window.logoutUser = logoutUser;
+window.switchAuthTab = switchAuthTab;
+window.handleLoginSubmit = handleLoginSubmit;
+window.handleRegisterSubmit = handleRegisterSubmit;
+window.quickLogin = quickLogin;
+window.showRecordsView = showRecordsView;
+window.switchRecordsSubTab = switchRecordsSubTab;
+window.directOwnerResolve = directOwnerResolve;
+window.resolvePendingItemDirectly = resolvePendingItemDirectly;
+window.toggleFinderNotifyForm = toggleFinderNotifyForm;
+window.toggleTheme = toggleTheme;
+window.showNewItemForm = showNewItemForm;
+window.setNavFilter = setNavFilter;
+window.setCategoryFilter = setCategoryFilter;
+window.showAdminView = showAdminView;
+window.selectItem = selectItem;
+window.inspectClaim = inspectClaim;
+window.inspectResolvedItem = inspectResolvedItem;
+window.executeApprove = executeApprove;
+
 
