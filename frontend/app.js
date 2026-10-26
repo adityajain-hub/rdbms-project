@@ -343,8 +343,51 @@ function toggleTheme() {
 
 async function initApp() {
   await loadCategories();
+  await syncCurrentUser();
+  await loadClaims();
   await loadItems();
   await loadStats();
+}
+
+async function syncCurrentUser() {
+  if (!currentUser || !isLiveApi) return;
+  try {
+    const res = await fetch(`${API_BASE}/api/users/sync`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_id: currentUser.user_id,
+        email: currentUser.email || '',
+        full_name: currentUser.full_name || ''
+      })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && data.user) {
+        currentUser = data.user;
+        localStorage.setItem('campus_auth_user', JSON.stringify(currentUser));
+        updateAuthUI();
+      }
+    }
+  } catch (e) {
+    console.warn('User sync failed:', e);
+  }
+}
+
+async function loadClaims() {
+  if (isLiveApi) {
+    try {
+      const res = await fetch(`${API_BASE}/api/claims`);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          allClaims = data;
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to load claims:', e);
+    }
+  }
 }
 
 // 1. Fetch Categories
@@ -590,7 +633,7 @@ function selectItem(itemId) {
     (currentUser.full_name && item.reported_by_name && currentUser.full_name.trim().toLowerCase() === item.reported_by_name.trim().toLowerCase())
   );
   const isAdmin = (currentUser.role === 'ADMIN') || 
-                  (currentUser.email && currentUser.email.toLowerCase() === 'aditya.2502052853@muj.maipal.edu');
+                  (currentUser.email && (currentUser.email.toLowerCase() === 'aditya.2502052853@muj.maipal.edu' || currentUser.email.toLowerCase() === 'aditya.2502052853@muj.manipal.edu'));
   const canResolve = isReporter || isAdmin;
 
   let actionHtml = '';
@@ -835,7 +878,7 @@ async function resolvePendingItemDirectly(itemId) {
     (currentUser.full_name && item.reported_by_name && currentUser.full_name.trim().toLowerCase() === item.reported_by_name.trim().toLowerCase())
   );
   const isAdmin = (currentUser.role === 'ADMIN') || 
-                  (currentUser.email && currentUser.email.toLowerCase() === 'aditya.2502052853@muj.maipal.edu');
+                  (currentUser.email && (currentUser.email.toLowerCase() === 'aditya.2502052853@muj.maipal.edu' || currentUser.email.toLowerCase() === 'aditya.2502052853@muj.manipal.edu'));
 
   if (!isAdmin && !isReporter) {
     alert('Access Denied: Only the person who reported this item or an Admin can confirm handover and resolve this record.');
@@ -843,12 +886,13 @@ async function resolvePendingItemDirectly(itemId) {
   }
 
   let targetClaim = allClaims.find(c => c.item_id === itemId && c.status === 'PENDING');
-  if (!targetClaim && isLiveApi) {
+  if (isLiveApi) {
     try {
       const res = await fetch(`${API_BASE}/api/items/${itemId}/claims`);
       if (res.ok) {
         const claims = await res.json();
-        targetClaim = claims.find(c => c.status === 'PENDING');
+        const pending = claims.find(c => c.status === 'PENDING');
+        if (pending) targetClaim = pending;
       }
     } catch (e) {}
   }
@@ -870,7 +914,7 @@ async function directOwnerResolve(itemId) {
     (currentUser.full_name && targetItem.reported_by_name && currentUser.full_name.trim().toLowerCase() === targetItem.reported_by_name.trim().toLowerCase())
   );
   const isAdmin = (currentUser.role === 'ADMIN') || 
-                  (currentUser.email && currentUser.email.toLowerCase() === 'aditya.2502052853@muj.maipal.edu');
+                  (currentUser.email && (currentUser.email.toLowerCase() === 'aditya.2502052853@muj.maipal.edu' || currentUser.email.toLowerCase() === 'aditya.2502052853@muj.manipal.edu'));
 
   if (!isAdmin && !isReporter) {
     alert('Access Denied: Only the person who reported this item or an Admin can mark it resolved.');
@@ -888,6 +932,8 @@ async function directOwnerResolve(itemId) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           user_id: currentUser.user_id,
+          email: currentUser.email || '',
+          full_name: currentUser.full_name || '',
           role: currentUser.role
         })
       });
@@ -895,6 +941,11 @@ async function directOwnerResolve(itemId) {
       if (!res.ok) {
         alert(data.message || 'Failed to mark item resolved.');
         return;
+      }
+      if (data.user_id && currentUser.role !== 'ADMIN') {
+        currentUser.user_id = data.user_id;
+        localStorage.setItem('campus_auth_user', JSON.stringify(currentUser));
+        updateAuthUI();
       }
     } catch (e) {
       console.warn('API call failed, updating local state:', e);
@@ -1201,7 +1252,7 @@ async function executeApprove(claimId) {
     (currentUser.full_name && targetItem.reported_by_name && currentUser.full_name.trim().toLowerCase() === targetItem.reported_by_name.trim().toLowerCase())
   );
   const isAdmin = (currentUser.role === 'ADMIN') || 
-                  (currentUser.email && currentUser.email.toLowerCase() === 'aditya.2502052853@muj.maipal.edu');
+                  (currentUser.email && (currentUser.email.toLowerCase() === 'aditya.2502052853@muj.maipal.edu' || currentUser.email.toLowerCase() === 'aditya.2502052853@muj.manipal.edu'));
 
   if (!isAdmin && !isReporter) {
     alert('Access Denied: Only the person who reported this item or an Admin can confirm handover and resolve this record.');
@@ -1215,6 +1266,8 @@ async function executeApprove(claimId) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           user_id: currentUser.user_id,
+          email: currentUser.email || '',
+          full_name: currentUser.full_name || '',
           role: currentUser.role
         })
       });
@@ -1222,6 +1275,11 @@ async function executeApprove(claimId) {
       if (!res.ok) {
         alert(data.message || 'Approval failed: access denied.');
         return;
+      }
+      if (data.user_id && currentUser.role !== 'ADMIN') {
+        currentUser.user_id = data.user_id;
+        localStorage.setItem('campus_auth_user', JSON.stringify(currentUser));
+        updateAuthUI();
       }
     } catch (e) {
       console.warn('API call failed, updating local state:', e);

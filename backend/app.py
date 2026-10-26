@@ -194,6 +194,56 @@ def get_categories():
     return jsonify(data)
 
 
+@app.route('/api/users/sync', methods=['POST'])
+def sync_user():
+    d = request.json or {}
+    req_user_id = d.get('user_id')
+    req_email = (d.get('email') or '').strip().lower()
+    req_name = (d.get('full_name') or '').strip().lower()
+
+    conn, mode = get_db()
+    cur = conn.cursor(dictionary=True) if mode == 'MYSQL' else conn.cursor()
+    p = ph(mode)
+
+    user_row = None
+    # 1. Try finding by email
+    if req_email:
+        alt_email = req_email.replace('manipal', 'maipal') if 'manipal' in req_email else req_email.replace('maipal', 'manipal')
+        cur.execute(f"SELECT user_id, full_name, email, phone, role FROM users WHERE (LOWER(email) = {p} OR LOWER(email) = {p})", (req_email, alt_email))
+        row = cur.fetchone()
+        if row:
+            user_row = dict(row) if mode == 'SQLITE' else row
+
+    # 2. Try finding by full_name
+    if not user_row and req_name:
+        cur.execute(f"SELECT user_id, full_name, email, phone, role FROM users WHERE LOWER(full_name) = {p}", (req_name,))
+        row = cur.fetchone()
+        if row:
+            user_row = dict(row) if mode == 'SQLITE' else row
+
+    # 3. Try finding by user_id
+    if not user_row and req_user_id and str(req_user_id).isdigit():
+        cur.execute(f"SELECT user_id, full_name, email, phone, role FROM users WHERE user_id = {p}", (int(req_user_id),))
+        row = cur.fetchone()
+        if row:
+            user_row = dict(row) if mode == 'SQLITE' else row
+
+    conn.close()
+
+    if user_row:
+        return jsonify({
+            'success': True,
+            'user': {
+                'user_id': user_row['user_id'],
+                'full_name': user_row['full_name'],
+                'email': user_row['email'],
+                'phone': user_row['phone'],
+                'role': user_row['role']
+            }
+        })
+    return jsonify({'success': False, 'message': 'User record not found in database.'}), 404
+
+
 @app.route('/api/items')
 def get_items():
     conn, mode = get_db()
@@ -202,8 +252,8 @@ def get_items():
                c.category_name, i.location, i.date_incident, i.image_url, i.status,
                i.reported_by, u.full_name AS reported_by_name, u.email AS reported_by_email, u.phone AS contact_phone
         FROM items i
-        JOIN categories c ON i.category_id = c.category_id
-        JOIN users u ON i.reported_by = u.user_id"""
+        LEFT JOIN categories c ON i.category_id = c.category_id
+        LEFT JOIN users u ON i.reported_by = u.user_id"""
     report_type = request.args.get('type')
     status_filter = request.args.get('status')
     conditions = []
@@ -221,6 +271,9 @@ def get_items():
 
     cur.execute(sql, tuple(params))
     data = rows(cur, mode)
+    for row in data:
+        if row.get('date_incident') and not isinstance(row['date_incident'], str):
+            row['date_incident'] = str(row['date_incident'])
     conn.close()
     return jsonify(data)
 
@@ -340,8 +393,11 @@ def get_claims():
     conn, mode = get_db()
     cur = conn.cursor(dictionary=True) if mode == 'MYSQL' else conn.cursor()
     cur.execute("""SELECT c.claim_id, c.item_id, i.title AS item_title, i.location,
-               c.claimant_name, c.claimant_contact, c.proof_details, c.status
-        FROM claims c JOIN items i ON c.item_id = i.item_id
+               c.claimant_name, c.claimant_contact, c.proof_details, c.status,
+               i.image_url, i.reported_by, u.full_name AS reported_by_name
+        FROM claims c 
+        JOIN items i ON c.item_id = i.item_id
+        LEFT JOIN users u ON i.reported_by = u.user_id
         WHERE c.status = 'PENDING' ORDER BY c.claim_id DESC""")
     data = rows(cur, mode)
     conn.close()
@@ -406,6 +462,8 @@ def approve_claim(claim_id):
     d = request.json or {}
     req_user_id = d.get('user_id')
     req_role = (d.get('role') or '').upper()
+    req_email = (d.get('email') or '').strip().lower()
+    req_name = (d.get('full_name') or d.get('name') or '').strip().lower()
 
     conn, mode = get_db()
     cur = conn.cursor(dictionary=True) if mode == 'MYSQL' else conn.cursor()
@@ -413,10 +471,11 @@ def approve_claim(claim_id):
 
     # Fetch claim and associated item reporter
     cur.execute(
-        f"""SELECT c.claim_id, c.item_id, c.claimant_name, i.title, i.reported_by, u.full_name AS reporter_name 
+        f"""SELECT c.claim_id, c.item_id, c.claimant_name, i.title, i.reported_by, 
+                   u.full_name AS reporter_name, u.email AS reporter_email, u.role AS reporter_role 
             FROM claims c 
             JOIN items i ON c.item_id = i.item_id 
-            JOIN users u ON i.reported_by = u.user_id 
+            LEFT JOIN users u ON i.reported_by = u.user_id 
             WHERE c.claim_id = {p}""",
         (claim_id,)
     )
@@ -425,20 +484,53 @@ def approve_claim(claim_id):
         conn.close()
         return jsonify({'success': False, 'message': 'Claim record not found.'}), 404
 
+    item_id = claim_info['item_id'] if mode == 'MYSQL' else claim_info[1]
     item_reported_by = claim_info['reported_by'] if mode == 'MYSQL' else claim_info[4]
     item_title = claim_info['title'] if mode == 'MYSQL' else claim_info[3]
+    reporter_name = (claim_info['reporter_name'] or '') if mode == 'MYSQL' else (claim_info[5] or '')
+    reporter_email = (claim_info['reporter_email'] or '') if mode == 'MYSQL' else (claim_info[6] or '')
 
     # Verify authorization: Must be ADMIN or the user who reported the item
     is_admin = (req_role == 'ADMIN')
-    if req_user_id:
-        cur.execute(f"SELECT role FROM users WHERE user_id = {p}", (req_user_id,))
+    if req_email in ('aditya.2502052853@muj.maipal.edu', 'aditya.2502052853@muj.manipal.edu'):
+        is_admin = True
+
+    if not is_admin and req_user_id and str(req_user_id).isdigit():
+        cur.execute(f"SELECT role, email FROM users WHERE user_id = {p}", (int(req_user_id),))
         u = cur.fetchone()
         if u:
             u_role = u['role'] if mode == 'MYSQL' else u[0]
             if u_role == 'ADMIN':
                 is_admin = True
 
-    is_reporter = (req_user_id is not None and int(req_user_id) == int(item_reported_by))
+    if not is_admin and req_email:
+        alt_email = req_email.replace('manipal', 'maipal') if 'manipal' in req_email else req_email.replace('maipal', 'manipal')
+        cur.execute(f"SELECT role FROM users WHERE (LOWER(email) = {p} OR LOWER(email) = {p})", (req_email, alt_email))
+        u = cur.fetchone()
+        if u:
+            u_role = u['role'] if mode == 'MYSQL' else u[0]
+            if u_role == 'ADMIN':
+                is_admin = True
+
+    # Multi-factor Reporter verification (ID, Email, or Full Name matching)
+    is_reporter = False
+    if req_user_id is not None and str(req_user_id).isdigit() and int(req_user_id) == int(item_reported_by):
+        is_reporter = True
+    elif req_email and reporter_email and (
+        req_email == reporter_email.lower() or 
+        req_email.replace('manipal', 'maipal') == reporter_email.lower().replace('manipal', 'maipal')
+    ):
+        is_reporter = True
+    elif req_name and reporter_name and req_name == reporter_name.strip().lower():
+        is_reporter = True
+    elif req_user_id and str(req_user_id).isdigit():
+        cur.execute(f"SELECT email, full_name FROM users WHERE user_id = {p}", (int(req_user_id),))
+        u = cur.fetchone()
+        if u:
+            u_email = (u['email'] if mode == 'MYSQL' else u[0] or '').lower()
+            u_name = (u['full_name'] if mode == 'MYSQL' else u[1] or '').strip().lower()
+            if (u_email and reporter_email and u_email == reporter_email.lower()) or (u_name and reporter_name and u_name == reporter_name.strip().lower()):
+                is_reporter = True
 
     if not (is_admin or is_reporter):
         conn.close()
@@ -447,11 +539,16 @@ def approve_claim(claim_id):
             'message': 'Access Denied: Only the person who reported this item or an Admin can confirm handover and resolve this record.'
         }), 403
 
+    # 1. Update target claim to APPROVED
     cur.execute(f"UPDATE claims SET status='APPROVED' WHERE claim_id={p}", (claim_id,))
+    # 2. Reject any other pending claims for this item so none remain pending
+    cur.execute(f"UPDATE claims SET status='REJECTED' WHERE item_id={p} AND claim_id != {p} AND status='PENDING'", (item_id, claim_id))
+    # 3. Ensure item status is updated to RESOLVED (trigger trg_resolve_item_on_claim also handles this in MySQL)
+    cur.execute(f"UPDATE items SET status='RESOLVED' WHERE item_id={p}", (item_id,))
+
     if mode == 'SQLITE':  # simulate trigger for demo mode
-        cur.execute("UPDATE items SET status='RESOLVED' WHERE item_id=(SELECT item_id FROM claims WHERE claim_id=?)", (claim_id,))
         try:
-            cur.execute("INSERT INTO activity_logs (action_type, details) VALUES ('CLAIM_APPROVED', ?)", (f"Claim #{claim_id} approved for Item #{claim_info[1]}",))
+            cur.execute("INSERT INTO activity_logs (action_type, details) VALUES ('CLAIM_APPROVED', ?)", (f"Claim #{claim_id} approved for Item #{item_id}",))
         except Exception:
             pass
 
@@ -459,7 +556,9 @@ def approve_claim(claim_id):
     conn.close()
     return jsonify({
         'success': True,
-        'message': f"Claim #{claim_id} for '{item_title}' approved! Item marked RESOLVED via trigger."
+        'message': f"Claim #{claim_id} for '{item_title}' approved! Item marked RESOLVED.",
+        'item_id': item_id,
+        'user_id': item_reported_by
     })
 
 
@@ -469,12 +568,21 @@ def resolve_item(item_id):
     d = request.json or {}
     req_user_id = d.get('user_id')
     req_role = (d.get('role') or '').upper()
+    req_email = (d.get('email') or '').strip().lower()
+    req_name = (d.get('full_name') or d.get('name') or '').strip().lower()
 
     conn, mode = get_db()
     cur = conn.cursor(dictionary=True) if mode == 'MYSQL' else conn.cursor()
     p = ph(mode)
 
-    cur.execute(f"SELECT item_id, title, reported_by FROM items WHERE item_id = {p}", (item_id,))
+    cur.execute(
+        f"""SELECT i.item_id, i.title, i.reported_by, 
+                   u.full_name AS reporter_name, u.email AS reporter_email, u.role AS reporter_role 
+            FROM items i 
+            LEFT JOIN users u ON i.reported_by = u.user_id 
+            WHERE i.item_id = {p}""",
+        (item_id,)
+    )
     it = cur.fetchone()
     if not it:
         conn.close()
@@ -482,11 +590,17 @@ def resolve_item(item_id):
 
     item_reported_by = it['reported_by'] if mode == 'MYSQL' else it[2]
     item_title = it['title'] if mode == 'MYSQL' else it[1]
+    reporter_name = (it['reporter_name'] or '') if mode == 'MYSQL' else (it[3] or '')
+    reporter_email = (it['reporter_email'] or '') if mode == 'MYSQL' else (it[4] or '')
 
+    # Check Admin authorization
     is_admin = (req_role == 'ADMIN')
+    if req_email in ('aditya.2502052853@muj.maipal.edu', 'aditya.2502052853@muj.manipal.edu'):
+        is_admin = True
+
     user_name = "Admin"
-    if req_user_id:
-        cur.execute(f"SELECT role, full_name FROM users WHERE user_id = {p}", (req_user_id,))
+    if not is_admin and req_user_id and str(req_user_id).isdigit():
+        cur.execute(f"SELECT role, full_name FROM users WHERE user_id = {p}", (int(req_user_id),))
         u = cur.fetchone()
         if u:
             u_role = u['role'] if mode == 'MYSQL' else u[0]
@@ -494,7 +608,35 @@ def resolve_item(item_id):
             if u_role == 'ADMIN':
                 is_admin = True
 
-    is_reporter = (req_user_id is not None and int(req_user_id) == int(item_reported_by))
+    if not is_admin and req_email:
+        alt_email = req_email.replace('manipal', 'maipal') if 'manipal' in req_email else req_email.replace('maipal', 'manipal')
+        cur.execute(f"SELECT role, full_name FROM users WHERE (LOWER(email) = {p} OR LOWER(email) = {p})", (req_email, alt_email))
+        u = cur.fetchone()
+        if u:
+            u_role = u['role'] if mode == 'MYSQL' else u[0]
+            user_name = u['full_name'] if mode == 'MYSQL' else u[1]
+            if u_role == 'ADMIN':
+                is_admin = True
+
+    # Multi-factor Reporter verification
+    is_reporter = False
+    if req_user_id is not None and str(req_user_id).isdigit() and int(req_user_id) == int(item_reported_by):
+        is_reporter = True
+    elif req_email and reporter_email and (
+        req_email == reporter_email.lower() or 
+        req_email.replace('manipal', 'maipal') == reporter_email.lower().replace('manipal', 'maipal')
+    ):
+        is_reporter = True
+    elif req_name and reporter_name and req_name == reporter_name.strip().lower():
+        is_reporter = True
+    elif req_user_id and str(req_user_id).isdigit():
+        cur.execute(f"SELECT email, full_name FROM users WHERE user_id = {p}", (int(req_user_id),))
+        u = cur.fetchone()
+        if u:
+            u_email = (u['email'] if mode == 'MYSQL' else u[0] or '').lower()
+            u_name = (u['full_name'] if mode == 'MYSQL' else u[1] or '').strip().lower()
+            if (u_email and reporter_email and u_email == reporter_email.lower()) or (u_name and reporter_name and u_name == reporter_name.strip().lower()):
+                is_reporter = True
 
     if not (is_admin or is_reporter):
         conn.close()
@@ -520,7 +662,9 @@ def resolve_item(item_id):
     conn.close()
     return jsonify({
         'success': True,
-        'message': f"Item #{item_id} ('{item_title}') successfully marked as RESOLVED!"
+        'message': f"Item #{item_id} ('{item_title}') successfully marked as RESOLVED!",
+        'item_id': item_id,
+        'user_id': item_reported_by
     })
 
 
