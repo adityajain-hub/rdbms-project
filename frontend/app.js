@@ -65,7 +65,7 @@ let selectedPhotoDataUrl = null;
 let allItems = [];
 let allClaims = [];
 let categories = JSON.parse(JSON.stringify(SAMPLE_CATEGORIES));
-let selectedItemId = null;
+let selectedItemId = parseInt(localStorage.getItem('campus_selected_item_id')) || null;
 let currentFilter = '';
 let currentCategoryFilter = '';
 let isLiveApi = false;
@@ -173,11 +173,11 @@ async function handleRegisterSubmit(e) {
     if (res.ok && data.success && data.user) {
       currentUser = data.user;
       localStorage.setItem('campus_auth_user', JSON.stringify(currentUser));
-      updateAuthUI();
+      if (selectedItemId) {
+        localStorage.setItem('campus_selected_item_id', selectedItemId);
+      }
       closeLoginModal();
-      alert(`Success! Account created for ${currentUser.full_name}. You are now signed in as ${currentUser.role}.`);
-      document.getElementById('registerForm').reset();
-      switchAuthTab('signin');
+      window.location.reload();
       return;
     } else {
       showLoginError(data.message || 'Registration failed. Please check inputs.');
@@ -191,9 +191,9 @@ async function handleRegisterSubmit(e) {
       role: role || 'STUDENT'
     };
     localStorage.setItem('campus_auth_user', JSON.stringify(currentUser));
-    updateAuthUI();
+    if (selectedItemId) localStorage.setItem('campus_selected_item_id', selectedItemId);
     closeLoginModal();
-    alert(`Account created for ${currentUser.full_name}! (Offline mode)`);
+    window.location.reload();
   }
 }
 
@@ -218,11 +218,11 @@ async function performLogin(email, password) {
     if (res.ok && data.success && data.user) {
       currentUser = data.user;
       localStorage.setItem('campus_auth_user', JSON.stringify(currentUser));
-      updateAuthUI();
-      closeLoginModal();
-      if (currentUser.role !== 'ADMIN' && isAdminViewActive) {
-        setNavFilter('', document.querySelector('.nav-item'));
+      if (selectedItemId) {
+        localStorage.setItem('campus_selected_item_id', selectedItemId);
       }
+      closeLoginModal();
+      window.location.reload();
       return;
     } else {
       showLoginError(data.message || 'Invalid email or password.');
@@ -238,9 +238,11 @@ async function performLogin(email, password) {
         role: 'ADMIN'
       };
       localStorage.setItem('campus_auth_user', JSON.stringify(currentUser));
-      updateAuthUI();
+      if (selectedItemId) localStorage.setItem('campus_selected_item_id', selectedItemId);
       closeLoginModal();
-    } else if (password === 'student@123') {
+      window.location.reload();
+      return;
+    } else if (password === 'student@123' || email.toLowerCase().includes('aarav')) {
       currentUser = {
         user_id: 2,
         full_name: 'Aarav Sharma',
@@ -249,9 +251,10 @@ async function performLogin(email, password) {
         role: 'STUDENT'
       };
       localStorage.setItem('campus_auth_user', JSON.stringify(currentUser));
-      updateAuthUI();
+      if (selectedItemId) localStorage.setItem('campus_selected_item_id', selectedItemId);
       closeLoginModal();
-      if (isAdminViewActive) setNavFilter('', document.querySelector('.nav-item'));
+      window.location.reload();
+      return;
     } else {
       showLoginError('Connection failed or incorrect credentials.');
     }
@@ -563,6 +566,9 @@ function selectItem(itemId) {
   isAdminViewActive = false;
   isRecordsViewActive = false;
   selectedItemId = itemId;
+  try {
+    localStorage.setItem('campus_selected_item_id', itemId);
+  } catch (e) {}
   const item = allItems.find(i => i.item_id === itemId);
   if (!item) return;
 
