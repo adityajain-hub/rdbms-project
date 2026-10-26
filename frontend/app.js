@@ -757,6 +757,14 @@ function selectItem(itemId) {
     `;
   }
 
+  const deleteActiveBtnHtml = canResolve ? `
+    <div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border-color); text-align: center;">
+      <button type="button" class="btn-action-secondary" style="width: 100%; justify-content: center; color: #ef4444; border-color: rgba(239, 68, 68, 0.35); font-size: 0.73rem;" onclick="deleteItem(${item.item_id})">
+        🗑️ Delete Item Record
+      </button>
+    </div>
+  ` : '';
+
   const inspector = document.getElementById('inspectorBody');
   inspector.innerHTML = `
     <div class="inspector-thumb-box">
@@ -774,6 +782,7 @@ function selectItem(itemId) {
       </div>
     </div>
     ${actionHtml}
+    ${deleteActiveBtnHtml}
   `;
 
   if (document.getElementById('claimForm')) {
@@ -1494,6 +1503,23 @@ function inspectResolvedItem(itemId) {
 
   const imgSrc = item.image_url || item.image || 'images/laptop.jpg';
 
+  const isReporter = (
+    (currentUser.user_id && item.reported_by && parseInt(currentUser.user_id) === parseInt(item.reported_by)) ||
+    (currentUser.email && item.reported_by_email && currentUser.email.toLowerCase() === item.reported_by_email.toLowerCase()) ||
+    (currentUser.full_name && item.reported_by_name && currentUser.full_name.trim().toLowerCase() === item.reported_by_name.trim().toLowerCase())
+  );
+  const isAdmin = (currentUser.role === 'ADMIN') || 
+                  (currentUser.email && (currentUser.email.toLowerCase() === 'aditya.2502052853@muj.maipal.edu' || currentUser.email.toLowerCase() === 'aditya.2502052853@muj.manipal.edu'));
+  const canDelete = isReporter || isAdmin;
+
+  const deleteBtnHtml = canDelete ? `
+    <div style="margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border-color);">
+      <button type="button" class="btn-action-secondary" style="width: 100%; justify-content: center; color: #ef4444; border-color: rgba(239, 68, 68, 0.4); font-size: 0.74rem;" onclick="deleteItem(${item.item_id})">
+        🗑️ Delete Record from Database
+      </button>
+    </div>
+  ` : '';
+
   document.getElementById('inspectorBody').innerHTML = `
     <div class="inspector-thumb-box">
       <img src="${imgSrc}" alt="${item.title}" class="inspector-thumb-img">
@@ -1517,7 +1543,57 @@ function inspectResolvedItem(itemId) {
       </div>
       This belonging has been successfully recovered by its owner or handed over at the security desk. Archived in Records.
     </div>
+    ${deleteBtnHtml}
   `;
+}
+
+async function deleteItem(itemId) {
+  const item = allItems.find(i => i.item_id === itemId);
+  const title = item ? item.title : `Item #${itemId}`;
+
+  if (!confirm(`Are you sure you want to permanently delete '${title}' from the database?\n\nThis will remove the item and its claim records.`)) {
+    return;
+  }
+
+  if (isLiveApi) {
+    try {
+      const res = await fetch(`${API_BASE}/api/items/${itemId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: currentUser.user_id,
+          email: currentUser.email || '',
+          full_name: currentUser.full_name || '',
+          role: currentUser.role
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.message || 'Failed to delete item.');
+        return;
+      }
+    } catch (e) {
+      console.warn('API delete call failed:', e);
+    }
+  }
+
+  allItems = allItems.filter(i => i.item_id !== itemId);
+  allClaims = allClaims.filter(c => c.item_id !== itemId);
+  if (selectedItemId === itemId) {
+    selectedItemId = null;
+    try {
+      localStorage.removeItem('campus_selected_item_id');
+    } catch (e) {}
+  }
+
+  alert(`Item #${itemId} ('${title}') has been permanently deleted from the database.`);
+
+  await loadItems();
+  await loadStats();
+
+  if (isRecordsViewActive) {
+    await renderRecordsContent();
+  }
 }
 
 // Navigation Filter Helpers
@@ -1580,5 +1656,6 @@ window.selectItem = selectItem;
 window.inspectClaim = inspectClaim;
 window.inspectResolvedItem = inspectResolvedItem;
 window.executeApprove = executeApprove;
+window.deleteItem = deleteItem;
 
 

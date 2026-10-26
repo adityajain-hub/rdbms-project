@@ -668,6 +668,110 @@ def resolve_item(item_id):
     })
 
 
+# Delete item endpoint (authorized for reporter or admin)
+@app.route('/api/items/<int:item_id>', methods=['DELETE', 'POST'])
+def delete_item(item_id):
+    d = request.json or {}
+    req_user_id = d.get('user_id')
+    req_role = (d.get('role') or '').upper()
+    req_email = (d.get('email') or '').strip().lower()
+    req_name = (d.get('full_name') or d.get('name') or '').strip().lower()
+
+    conn, mode = get_db()
+    cur = conn.cursor(dictionary=True) if mode == 'MYSQL' else conn.cursor()
+    p = ph(mode)
+
+    cur.execute(
+        f"""SELECT i.item_id, i.title, i.reported_by, 
+                   u.full_name AS reporter_name, u.email AS reporter_email, u.role AS reporter_role 
+            FROM items i 
+            LEFT JOIN users u ON i.reported_by = u.user_id 
+            WHERE i.item_id = {p}""",
+        (item_id,)
+    )
+    it = cur.fetchone()
+    if not it:
+        conn.close()
+        return jsonify({'success': False, 'message': 'Item not found.'}), 404
+
+    item_reported_by = it['reported_by'] if mode == 'MYSQL' else it[2]
+    item_title = it['title'] if mode == 'MYSQL' else it[1]
+    reporter_name = (it['reporter_name'] or '') if mode == 'MYSQL' else (it[3] or '')
+    reporter_email = (it['reporter_email'] or '') if mode == 'MYSQL' else (it[4] or '')
+
+    # Check Admin authorization
+    is_admin = (req_role == 'ADMIN')
+    if req_email in ('aditya.2502052853@muj.maipal.edu', 'aditya.2502052853@muj.manipal.edu'):
+        is_admin = True
+
+    user_name = "Admin"
+    if not is_admin and req_user_id and str(req_user_id).isdigit():
+        cur.execute(f"SELECT role, full_name FROM users WHERE user_id = {p}", (int(req_user_id),))
+        u = cur.fetchone()
+        if u:
+            u_role = u['role'] if mode == 'MYSQL' else u[0]
+            user_name = u['full_name'] if mode == 'MYSQL' else u[1]
+            if u_role == 'ADMIN':
+                is_admin = True
+
+    if not is_admin and req_email:
+        alt_email = req_email.replace('manipal', 'maipal') if 'manipal' in req_email else req_email.replace('maipal', 'manipal')
+        cur.execute(f"SELECT role, full_name FROM users WHERE (LOWER(email) = {p} OR LOWER(email) = {p})", (req_email, alt_email))
+        u = cur.fetchone()
+        if u:
+            u_role = u['role'] if mode == 'MYSQL' else u[0]
+            user_name = u['full_name'] if mode == 'MYSQL' else u[1]
+            if u_role == 'ADMIN':
+                is_admin = True
+
+    # Multi-factor Reporter verification
+    is_reporter = False
+    if req_user_id is not None and str(req_user_id).isdigit() and int(req_user_id) == int(item_reported_by):
+        is_reporter = True
+    elif req_email and reporter_email and (
+        req_email == reporter_email.lower() or 
+        req_email.replace('manipal', 'maipal') == reporter_email.lower().replace('manipal', 'maipal')
+    ):
+        is_reporter = True
+    elif req_name and reporter_name and req_name == reporter_name.strip().lower():
+        is_reporter = True
+    elif req_user_id and str(req_user_id).isdigit():
+        cur.execute(f"SELECT email, full_name FROM users WHERE user_id = {p}", (int(req_user_id),))
+        u = cur.fetchone()
+        if u:
+            u_email = (u['email'] if mode == 'MYSQL' else u[0] or '').lower()
+            u_name = (u['full_name'] if mode == 'MYSQL' else u[1] or '').strip().lower()
+            if (u_email and reporter_email and u_email == reporter_email.lower()) or (u_name and reporter_name and u_name == reporter_name.strip().lower()):
+                is_reporter = True
+
+    if not (is_admin or is_reporter):
+        conn.close()
+        return jsonify({
+            'success': False,
+            'message': 'Access Denied: Only the person who reported this item or an Admin can delete this record.'
+        }), 403
+
+    # Delete claims first for databases/engines without active FK cascade
+    cur.execute(f"DELETE FROM claims WHERE item_id = {p}", (item_id,))
+    cur.execute(f"DELETE FROM items WHERE item_id = {p}", (item_id,))
+
+    try:
+        actor = "Admin" if is_admin else f"Reporter {user_name}"
+        cur.execute(
+            f"INSERT INTO activity_logs (action_type, details) VALUES ({p}, {p})",
+            ('ITEM_DELETED', f"Item #{item_id} ('{item_title}') permanently deleted from database by {actor}")
+        )
+    except Exception:
+        pass
+
+    conn.commit()
+    conn.close()
+    return jsonify({
+        'success': True,
+        'message': f"Item #{item_id} ('{item_title}') permanently deleted from database."
+    })
+
+
 # Fetch full activity & audit logs from activity_logs table
 @app.route('/api/logs')
 def get_logs():
