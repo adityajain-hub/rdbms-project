@@ -110,6 +110,64 @@ def login():
     })
 
 
+@app.route('/api/register', methods=['POST'])
+def register():
+    d = request.json or {}
+    full_name = (d.get('full_name') or '').strip()
+    email = (d.get('email') or '').strip().lower()
+    phone = (d.get('phone') or '').strip()
+    password = (d.get('password') or '').strip()
+    role = (d.get('role') or 'STUDENT').strip().upper()
+
+    if not full_name or not email or not password:
+        return jsonify({'success': False, 'message': 'Full name, email, and password are required.'}), 400
+
+    if role not in ('STUDENT', 'FACULTY', 'STAFF', 'ADMIN'):
+        role = 'STUDENT'
+
+    conn, mode = get_db()
+    cur = conn.cursor(dictionary=True) if mode == 'MYSQL' else conn.cursor()
+    p = ph(mode)
+
+    # Check if email is already registered
+    cur.execute(f"SELECT user_id FROM users WHERE LOWER(email) = {p}", (email,))
+    existing = cur.fetchone()
+    if existing:
+        conn.close()
+        return jsonify({'success': False, 'message': 'Email is already registered. Please sign in.'}), 409
+
+    # Insert new user
+    cur.execute(
+        f"INSERT INTO users (full_name, email, phone, password, role) VALUES ({p}, {p}, {p}, {p}, {p})",
+        (full_name, email, phone or '9829000000', password, role)
+    )
+    conn.commit()
+    new_user_id = cur.lastrowid
+
+    try:
+        cur.execute(
+            f"INSERT INTO activity_logs (action_type, details) VALUES ({p}, {p})",
+            ('USER_REGISTERED', f"New {role} registered: {full_name} ({email})")
+        )
+        conn.commit()
+    except Exception:
+        pass
+
+    conn.close()
+
+    return jsonify({
+        'success': True,
+        'message': f'Account created successfully! Welcome, {full_name}.',
+        'user': {
+            'user_id': new_user_id,
+            'full_name': full_name,
+            'email': email,
+            'phone': phone or '9829000000',
+            'role': role
+        }
+    }), 201
+
+
 @app.route('/api/upload', methods=['POST'])
 def upload_file():
     if 'image' not in request.files:
@@ -203,6 +261,58 @@ def get_claims():
     data = rows(cur, mode)
     conn.close()
     return jsonify(data)
+
+
+@app.route('/api/items/<int:item_id>/claims')
+def get_item_claims(item_id):
+    conn, mode = get_db()
+    cur = conn.cursor(dictionary=True) if mode == 'MYSQL' else conn.cursor()
+    p = ph(mode)
+    cur.execute(f"SELECT * FROM claims WHERE item_id = {p} ORDER BY claim_id DESC", (item_id,))
+    data = rows(cur, mode)
+    conn.close()
+    return jsonify(data)
+
+
+@app.route('/api/items/<int:item_id>/notify-found', methods=['POST'])
+def notify_found_item(item_id):
+    d = request.json or {}
+    finder_name = (d.get('finder_name') or 'Campus Member').strip()
+    finder_contact = (d.get('finder_contact') or '').strip()
+    message = (d.get('message') or '').strip()
+
+    if not finder_contact or not message:
+        return jsonify({'success': False, 'message': 'Contact and message details are required.'}), 400
+
+    conn, mode = get_db()
+    cur = conn.cursor()
+    p = ph(mode)
+
+    proof_text = f"DIRECT HANDOVER NOTICE: {message}"
+    cur.execute(
+        f"INSERT INTO claims (item_id, claimant_name, claimant_contact, proof_details, status) VALUES ({p}, {p}, {p}, {p}, 'PENDING')",
+        (item_id, finder_name, finder_contact, proof_text)
+    )
+    new_claim_id = cur.lastrowid
+
+    cur.execute(f"UPDATE items SET status='CLAIM_PENDING' WHERE item_id={p}", (item_id,))
+
+    try:
+        cur.execute(
+            f"INSERT INTO activity_logs (action_type, details) VALUES ({p}, {p})",
+            ('FINDER_NOTIFIED', f"Finder {finder_name} ({finder_contact}) notified owner of Item #{item_id}: {message[:100]}")
+        )
+    except Exception:
+        pass
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({
+        'success': True,
+        'message': 'Owner has been notified! Item status set to CLAIM_PENDING.',
+        'claim_id': new_claim_id
+    })
 
 
 # Approving in MySQL fires trigger: trg_resolve_item_on_claim

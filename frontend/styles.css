@@ -984,3 +984,58 @@ textarea.form-control {
   background: var(--accent-red);
 }
 
+/* =====================================================================
+   AUTH SWITCHER TABS (SIGN IN vs SIGN UP)
+   ===================================================================== */
+.auth-tabs {
+  display: flex;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.auth-tab {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: center;
+}
+
+.auth-tab.active {
+  background: var(--accent-purple);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.35);
+}
+
+.auth-tab:hover:not(.active) {
+  color: var(--text-main);
+  background: var(--bg-card-hover);
+}
+
+/* =====================================================================
+   FINDER NOTIFICATION & DIRECT HANDOVER STYLES
+   ===================================================================== */
+.finder-notice-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 14px;
+  margin-top: 14px;
+  transition: border-color 0.2s ease;
+}
+
+.finder-notice-box:hover {
+  border-color: var(--accent-green);
+}
+
+

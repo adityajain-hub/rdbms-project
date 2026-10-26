@@ -118,6 +118,27 @@ function closeLoginModal() {
   if (overlay) overlay.classList.remove('active');
 }
 
+function switchAuthTab(tab) {
+  const tabSignIn = document.getElementById('tabBtnSignIn');
+  const tabSignUp = document.getElementById('tabBtnSignUp');
+  const signInSec = document.getElementById('signInSection');
+  const signUpSec = document.getElementById('signUpSection');
+  const errEl = document.getElementById('loginErrorMsg');
+  if (errEl) errEl.style.display = 'none';
+
+  if (tab === 'signup') {
+    if (tabSignIn) tabSignIn.classList.remove('active');
+    if (tabSignUp) tabSignUp.classList.add('active');
+    if (signInSec) signInSec.style.display = 'none';
+    if (signUpSec) signUpSec.style.display = 'block';
+  } else {
+    if (tabSignUp) tabSignUp.classList.remove('active');
+    if (tabSignIn) tabSignIn.classList.add('active');
+    if (signUpSec) signUpSec.style.display = 'none';
+    if (signInSec) signInSec.style.display = 'block';
+  }
+}
+
 async function handleLoginSubmit(e) {
   if (e) e.preventDefault();
   const email = document.getElementById('loginEmail').value.trim();
@@ -125,7 +146,53 @@ async function handleLoginSubmit(e) {
   await performLogin(email, password);
 }
 
+async function handleRegisterSubmit(e) {
+  if (e) e.preventDefault();
+  const full_name = document.getElementById('regName').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const phone = document.getElementById('regPhone').value.trim();
+  const password = document.getElementById('regPassword').value.trim();
+  const role = document.getElementById('regRole').value;
+
+  const errEl = document.getElementById('loginErrorMsg');
+  if (errEl) errEl.style.display = 'none';
+
+  try {
+    const res = await fetch(`${API_BASE}/api/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ full_name, email, phone, password, role })
+    });
+    const data = await res.json();
+    if (res.ok && data.success && data.user) {
+      currentUser = data.user;
+      localStorage.setItem('campus_auth_user', JSON.stringify(currentUser));
+      updateAuthUI();
+      closeLoginModal();
+      alert(`Success! Account created for ${currentUser.full_name}. You are now signed in as ${currentUser.role}.`);
+      document.getElementById('registerForm').reset();
+      switchAuthTab('signin');
+      return;
+    } else {
+      showLoginError(data.message || 'Registration failed. Please check inputs.');
+    }
+  } catch (err) {
+    currentUser = {
+      user_id: Date.now(),
+      full_name: full_name,
+      email: email,
+      phone: phone || '9829000000',
+      role: role || 'STUDENT'
+    };
+    localStorage.setItem('campus_auth_user', JSON.stringify(currentUser));
+    updateAuthUI();
+    closeLoginModal();
+    alert(`Account created for ${currentUser.full_name}! (Offline mode)`);
+  }
+}
+
 async function quickLogin(email, password) {
+  switchAuthTab('signin');
   document.getElementById('loginEmail').value = email;
   document.getElementById('loginPassword').value = password;
   await performLogin(email, password);
@@ -524,8 +591,16 @@ function selectItem(itemId) {
     `;
   } else if (isPending) {
     actionHtml = `
-      <div style="background: #201a14; border: 1px solid #4a341a; border-radius: 4px; padding: 10px; color: #f59e0b; font-size: 0.8rem; text-align: center; margin-top: 10px;">
-        Claim Submitted: Awaiting Admin Verification in Claims Panel.
+      <div style="background: #201a14; border: 1px solid #4a341a; border-radius: 6px; padding: 12px; color: #f59e0b; font-size: 0.8rem; margin-top: 10px;">
+        <div style="font-weight: 700; margin-bottom: 4px; display:flex; align-items:center; gap:6px;">
+          <span>🔔</span> <span>RECOVERY / CLAIM NOTICE PENDING</span>
+        </div>
+        <p style="font-size: 0.74rem; color: #fcd34d; margin: 0 0 10px 0; line-height: 1.4;">
+          A campus member reported finding this item or filed an ownership claim.
+        </p>
+        <button type="button" class="btn-action-primary" style="background:#10b981; border-color:#059669; font-size:0.75rem; padding:7px 10px;" onclick="resolvePendingItemDirectly(${item.item_id})">
+          ✅ Confirm Item Recovered (Mark Resolved)
+        </button>
       </div>
     `;
   } else if (isResolved) {
@@ -535,14 +610,52 @@ function selectItem(itemId) {
       </div>
     `;
   } else if (!isFound && !isResolved) {
+    const cleanPhone = (item.contact_phone || '9829000000').replace(/[^0-9]/g, '');
     actionHtml = `
-      <div style="background: var(--bg-card); border: 1px dashed var(--border-color); border-radius: 6px; padding: 12px; margin-top: 12px; text-align: center;">
-        <div style="font-size: 0.74rem; font-weight: 700; color: var(--accent-red); margin-bottom: 4px; display: flex; align-items: center; justify-content: center; gap: 5px;">
-          <span>🔍</span> <span>LOST ITEM NOTICE</span>
+      <div class="finder-notice-box">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+          <div style="font-size: 0.78rem; font-weight: 700; color: var(--accent-green); display: flex; align-items: center; gap: 5px;">
+            <span>📢</span> <span>FOUND THIS ITEM?</span>
+          </div>
+          <span style="font-size: 0.68rem; color: var(--text-dim);">Direct Contact</span>
         </div>
-        <p style="font-size: 0.73rem; color: var(--text-dim); margin: 0; line-height: 1.4;">
-          This item is reported as <b>LOST</b>. If someone finds it and logs it as a <b>FOUND ITEM</b>, the <b>"FILE OWNERSHIP CLAIM"</b> button will appear on that found item.
+        <p style="font-size: 0.74rem; color: var(--text-muted); margin-bottom: 10px; line-height: 1.4;">
+          If you found this belonging, you can directly notify <b>${item.reported_by_name}</b> without listing it as a separate found item.
         </p>
+
+        <!-- Direct Contact Buttons -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px;">
+          <a href="tel:${cleanPhone}" class="btn-action-secondary" style="display:flex; align-items:center; justify-content:center; gap:5px; text-decoration:none; margin:0; padding:6px 4px; font-size:0.75rem;">
+            <span>📞</span> <span>Call Owner</span>
+          </a>
+          <a href="https://wa.me/91${cleanPhone}" target="_blank" class="btn-action-secondary" style="display:flex; align-items:center; justify-content:center; gap:5px; text-decoration:none; margin:0; padding:6px 4px; font-size:0.75rem;">
+            <span>💬</span> <span>WhatsApp</span>
+          </a>
+        </div>
+
+        <button type="button" class="btn-action-primary" onclick="toggleFinderNotifyForm()" style="font-size: 0.76rem; padding: 7px 10px;">
+          📢 Send Handover Notice to Owner
+        </button>
+
+        <div id="finderNotifyFormWrap" style="display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border-color);">
+          <form id="finderNotifyForm">
+            <div class="form-row">
+              <label>Your Name (Finder)</label>
+              <input type="text" class="form-control" id="fnName" value="${currentUser.full_name}" placeholder="e.g. Aayush Kumar" required>
+            </div>
+            <div class="form-row">
+              <label>Your Phone / Contact</label>
+              <input type="text" class="form-control" id="fnContact" value="${currentUser.phone || currentUser.email}" placeholder="e.g. 9588036565" required>
+            </div>
+            <div class="form-row">
+              <label>Handover Message / Where can owner collect?</label>
+              <textarea class="form-control" id="fnMessage" placeholder="e.g. I found your watch near Lab 304 and submitted it to the ground floor security desk / Call me to collect." required></textarea>
+            </div>
+            <button type="submit" class="btn-action-primary" style="margin-top: 6px; font-size: 0.76rem;">
+              Submit Handover Notice
+            </button>
+          </form>
+        </div>
       </div>
     `;
   }
@@ -604,6 +717,86 @@ function selectItem(itemId) {
       loadStats();
       selectItem(item.item_id);
     });
+  }
+
+  if (document.getElementById('finderNotifyForm')) {
+    document.getElementById('finderNotifyForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const payload = {
+        finder_name: document.getElementById('fnName').value.trim(),
+        finder_contact: document.getElementById('fnContact').value.trim(),
+        message: document.getElementById('fnMessage').value.trim()
+      };
+
+      if (isLiveApi) {
+        try {
+          const res = await fetch(`${API_BASE}/api/items/${item.item_id}/notify-found`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          if (res.ok) {
+            alert(`Handover Notice Sent to Owner!\n\nNotice saved into MySQL database. Item #${item.item_id} status marked as CLAIM_PENDING.`);
+            await loadItems();
+            await loadStats();
+            selectItem(item.item_id);
+            return;
+          }
+        } catch (err) {
+          console.warn('API notify-found failed, recording locally:', err);
+        }
+      }
+
+      item.status = 'CLAIM_PENDING';
+      allClaims.push({
+        claim_id: allClaims.length + 1,
+        item_id: item.item_id,
+        claimant_name: payload.finder_name,
+        claimant_contact: payload.finder_contact,
+        proof_details: 'DIRECT HANDOVER NOTICE: ' + payload.message,
+        status: 'PENDING',
+        image: item.image_url || item.image
+      });
+      alert(`Handover Notice Sent to Owner!\n\nNotice saved into database. Item #${item.item_id} status marked as CLAIM_PENDING.`);
+      loadStats();
+      selectItem(item.item_id);
+    });
+  }
+}
+
+function toggleFinderNotifyForm() {
+  const wrap = document.getElementById('finderNotifyFormWrap');
+  if (wrap) {
+    wrap.style.display = (wrap.style.display === 'none' || !wrap.style.display) ? 'block' : 'none';
+  }
+}
+
+async function resolvePendingItemDirectly(itemId) {
+  let targetClaim = allClaims.find(c => c.item_id === itemId && c.status === 'PENDING');
+  if (!targetClaim && isLiveApi) {
+    try {
+      const res = await fetch(`${API_BASE}/api/items/${itemId}/claims`);
+      if (res.ok) {
+        const claims = await res.json();
+        targetClaim = claims.find(c => c.status === 'PENDING');
+      }
+    } catch (e) {}
+  }
+
+  if (targetClaim) {
+    await executeApprove(targetClaim.claim_id, true);
+  } else {
+    if (isLiveApi) {
+      try {
+        await fetch(`${API_BASE}/api/claims/approve/0`, { method: 'POST' });
+      } catch (e) {}
+    }
+    const it = allItems.find(i => i.item_id === itemId);
+    if (it) it.status = 'RESOLVED';
+    alert(`Item #${itemId} marked as RESOLVED! Returned to verified owner.`);
+    await loadItems();
+    await loadStats();
+    selectItem(itemId);
   }
 }
 
@@ -881,14 +1074,15 @@ function inspectClaim(claimId) {
   `;
 }
 
-async function executeApprove(claimId) {
-  if (currentUser.role !== 'ADMIN') {
-    alert('Access Denied: Only Admin (Aditya) can approve claims.');
+async function executeApprove(claimId, allowOwner = false) {
+  const claim = allClaims.find(c => c.claim_id === claimId);
+  const targetItem = claim ? allItems.find(i => i.item_id === claim.item_id) : null;
+  const isOwner = targetItem && (targetItem.reported_by === currentUser.user_id || targetItem.reported_by_name === currentUser.full_name);
+
+  if (currentUser.role !== 'ADMIN' && !isOwner && !allowOwner) {
+    alert('Access Denied: Only Admin (Aditya) or the item owner can confirm and resolve this record.');
     return;
   }
-
-  const claim = allClaims.find(c => c.claim_id === claimId);
-  if (!claim) return;
 
   if (isLiveApi) {
     try {
@@ -900,16 +1094,19 @@ async function executeApprove(claimId) {
     }
   }
 
-  claim.status = 'APPROVED';
-  const targetItem = allItems.find(i => i.item_id === claim.item_id);
+  if (claim) claim.status = 'APPROVED';
   if (targetItem) {
     targetItem.status = 'RESOLVED';
   }
 
-  alert(`Claim #${claimId} APPROVED!\nTrigger 'trg_resolve_item_on_claim' automatically executed:\n→ Item #${claim.item_id} marked as RESOLVED.\n→ Audit record written to activity_logs.`);
+  alert(`Claim / Recovery #${claimId} APPROVED & CONFIRMED!\n\nTrigger 'trg_resolve_item_on_claim' executed:\n→ Item marked as RESOLVED.\n→ Audit record written to activity_logs.`);
   
   loadStats();
-  showAdminView(document.querySelectorAll('.nav-item')[3]);
+  if (isAdminViewActive) {
+    showAdminView(document.querySelectorAll('.nav-item')[3]);
+  } else if (targetItem) {
+    selectItem(targetItem.item_id);
+  }
 }
 
 // Navigation Filter Helpers

@@ -132,6 +132,7 @@
   </footer>
 
   <!-- AUTH / LOGIN MODAL OVERLAY -->
+  <!-- AUTH / LOGIN MODAL OVERLAY -->
   <div class="login-overlay" id="loginOverlay">
     <div class="login-modal">
       <div class="login-header">
@@ -140,48 +141,99 @@
         <p>RDBMS Lab (CSC2131) · Manipal University Jaipur</p>
       </div>
 
+      <!-- Auth Switcher Tabs -->
+      <div class="auth-tabs">
+        <button type="button" class="auth-tab active" id="tabBtnSignIn" onclick="switchAuthTab('signin')">Sign In</button>
+        <button type="button" class="auth-tab" id="tabBtnSignUp" onclick="switchAuthTab('signup')">Sign Up (New User)</button>
+      </div>
+
       <div class="login-error-box" id="loginErrorMsg"></div>
 
-      <form id="loginForm" onsubmit="handleLoginSubmit(event)">
-        <div class="form-row">
-          <label>University Email</label>
-          <input type="email" class="form-control" id="loginEmail" placeholder="e.g. aditya.2502052853@muj.maipal.edu" value="aditya.2502052853@muj.maipal.edu" required>
-        </div>
-        <div class="form-row">
-          <label>Password</label>
-          <input type="password" class="form-control" id="loginPassword" placeholder="Enter password" value="adi@123" required>
-        </div>
-        <button type="submit" class="btn-action-primary" style="margin-top: 10px;">
-          Sign In to Portal
-        </button>
-      </form>
-
-      <div class="quick-auth-section">
-        <div class="quick-auth-label">⚡ 1-Click Quick Demo Sign-In</div>
-        <div class="quick-auth-grid">
-          <button type="button" class="btn-quick-user" onclick="quickLogin('aditya.2502052853@muj.maipal.edu', 'adi@123')">
-            <div class="btn-quick-user-left">
-              <span class="user-avatar" style="background:#8b5cf6;">A</span>
-              <div>
-                <div class="btn-quick-user-name">Aditya <span class="user-role badge-admin">ADMIN</span></div>
-                <div class="btn-quick-user-email">aditya.2502052853@muj.maipal.edu</div>
-              </div>
-            </div>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+      <!-- 1. SIGN IN SECTION -->
+      <div id="signInSection">
+        <form id="loginForm" onsubmit="handleLoginSubmit(event)">
+          <div class="form-row">
+            <label>University Email</label>
+            <input type="email" class="form-control" id="loginEmail" placeholder="e.g. aditya.2502052853@muj.maipal.edu" value="aditya.2502052853@muj.maipal.edu" required>
+          </div>
+          <div class="form-row">
+            <label>Password</label>
+            <input type="password" class="form-control" id="loginPassword" placeholder="Enter password" value="adi@123" required>
+          </div>
+          <button type="submit" class="btn-action-primary" style="margin-top: 10px;">
+            Sign In to Portal
           </button>
+        </form>
 
-          <button type="button" class="btn-quick-user" onclick="quickLogin('aarav.sharma@muj.manipal.edu', 'student@123')">
-            <div class="btn-quick-user-left">
-              <span class="user-avatar" style="background:#10b981;">A</span>
-              <div>
-                <div class="btn-quick-user-name">Aarav Sharma <span class="user-role badge-student">STUDENT</span></div>
-                <div class="btn-quick-user-email">aarav.sharma@muj.manipal.edu</div>
+        <div style="text-align: center; margin-top: 10px;">
+          <a href="javascript:void(0)" onclick="switchAuthTab('signup')" style="font-size: 0.76rem; color: var(--accent-purple); text-decoration: none;">Don't have an account? Create one here →</a>
+        </div>
+
+        <div class="quick-auth-section">
+          <div class="quick-auth-label">⚡ 1-Click Quick Demo Sign-In</div>
+          <div class="quick-auth-grid">
+            <button type="button" class="btn-quick-user" onclick="quickLogin('aditya.2502052853@muj.maipal.edu', 'adi@123')">
+              <div class="btn-quick-user-left">
+                <span class="user-avatar" style="background:#8b5cf6;">A</span>
+                <div>
+                  <div class="btn-quick-user-name">Aditya <span class="user-role badge-admin">ADMIN</span></div>
+                  <div class="btn-quick-user-email">aditya.2502052853@muj.maipal.edu</div>
+                </div>
               </div>
-            </div>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-          </button>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+
+            <button type="button" class="btn-quick-user" onclick="quickLogin('aarav.sharma@muj.manipal.edu', 'student@123')">
+              <div class="btn-quick-user-left">
+                <span class="user-avatar" style="background:#10b981;">A</span>
+                <div>
+                  <div class="btn-quick-user-name">Aarav Sharma <span class="user-role badge-student">STUDENT</span></div>
+                  <div class="btn-quick-user-email">aarav.sharma@muj.manipal.edu</div>
+                </div>
+              </div>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
         </div>
       </div>
+
+      <!-- 2. SIGN UP (NEW USER) SECTION -->
+      <div id="signUpSection" style="display: none;">
+        <form id="registerForm" onsubmit="handleRegisterSubmit(event)">
+          <div class="form-row">
+            <label>Full Name</label>
+            <input type="text" class="form-control" id="regName" placeholder="e.g. Aayush Kumar" required>
+          </div>
+          <div class="form-row">
+            <label>University Email</label>
+            <input type="email" class="form-control" id="regEmail" placeholder="e.g. aayush.2502052856@muj.maipal.edu" required>
+          </div>
+          <div class="form-row">
+            <label>Contact Phone</label>
+            <input type="tel" class="form-control" id="regPhone" placeholder="e.g. 9588036565" required>
+          </div>
+          <div class="form-row">
+            <label>Password</label>
+            <input type="password" class="form-control" id="regPassword" placeholder="Create a secure password" required>
+          </div>
+          <div class="form-row">
+            <label>Campus Role</label>
+            <select class="form-control" id="regRole">
+              <option value="STUDENT" selected>Student</option>
+              <option value="FACULTY">Faculty</option>
+              <option value="STAFF">Staff / Security</option>
+            </select>
+          </div>
+          <button type="submit" class="btn-action-primary" style="margin-top: 10px;">
+            Create Account &amp; Sign In
+          </button>
+        </form>
+
+        <div style="text-align: center; margin-top: 10px;">
+          <a href="javascript:void(0)" onclick="switchAuthTab('signin')" style="font-size: 0.76rem; color: var(--accent-purple); text-decoration: none;">Already have an account? Sign In →</a>
+        </div>
+      </div>
+
     </div>
   </div>
 
