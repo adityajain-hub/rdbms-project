@@ -200,15 +200,26 @@ def get_items():
     cur = conn.cursor(dictionary=True) if mode == 'MYSQL' else conn.cursor()
     sql = """SELECT i.item_id, i.report_type, i.title, i.description,
                c.category_name, i.location, i.date_incident, i.image_url, i.status,
-               u.full_name AS reported_by_name, u.phone AS contact_phone
+               i.reported_by, u.full_name AS reported_by_name, u.email AS reported_by_email, u.phone AS contact_phone
         FROM items i
         JOIN categories c ON i.category_id = c.category_id
         JOIN users u ON i.reported_by = u.user_id"""
     report_type = request.args.get('type')
+    status_filter = request.args.get('status')
+    conditions = []
+    params = []
     if report_type:
-        cur.execute(sql + f" WHERE i.report_type = {ph(mode)} ORDER BY i.item_id DESC", (report_type,))
-    else:
-        cur.execute(sql + " ORDER BY i.item_id DESC")
+        conditions.append(f"i.report_type = {ph(mode)}")
+        params.append(report_type)
+    if status_filter:
+        conditions.append(f"i.status = {ph(mode)}")
+        params.append(status_filter)
+
+    if conditions:
+        sql += " WHERE " + " AND ".join(conditions)
+    sql += " ORDER BY i.item_id DESC"
+
+    cur.execute(sql, tuple(params))
     data = rows(cur, mode)
     conn.close()
     return jsonify(data)
@@ -218,7 +229,7 @@ def get_items():
 def add_item():
     d = request.json or {}
     conn, mode = get_db()
-    cur = conn.cursor()
+    cur = conn.cursor(dictionary=True) if mode == 'MYSQL' else conn.cursor()
     p = ph(mode)
     cur.execute(
         f"INSERT INTO items (report_type,title,description,category_id,location,date_incident,image_url,reported_by)"
@@ -229,6 +240,22 @@ def add_item():
     )
     conn.commit()
     new_id = cur.lastrowid
+
+    # Audit log item creation
+    try:
+        user_name = "Campus Member"
+        cur.execute(f"SELECT full_name FROM users WHERE user_id = {p}", (d.get('reported_by', 1),))
+        u_row = cur.fetchone()
+        if u_row:
+            user_name = u_row['full_name'] if mode == 'MYSQL' else u_row[0]
+        cur.execute(
+            f"INSERT INTO activity_logs (action_type, details) VALUES ({p}, {p})",
+            ('ITEM_REPORTED', f"New {d['report_type']} item reported: '{d['title']}' at {d['location']} by {user_name}")
+        )
+        conn.commit()
+    except Exception:
+        pass
+
     conn.close()
     return jsonify({"message": f"{d['report_type']} item reported!", "item_id": new_id})
 
@@ -244,10 +271,19 @@ def submit_claim():
         (d['item_id'], d['claimant_name'], d['claimant_contact'], d['proof_details'])
     )
     cur.execute(f"UPDATE items SET status='CLAIM_PENDING' WHERE item_id={p}", (d['item_id'],))
-    conn.commit()
     new_claim_id = cur.lastrowid
+
+    try:
+        cur.execute(
+            f"INSERT INTO activity_logs (action_type, details) VALUES ({p}, {p})",
+            ('CLAIM_SUBMITTED', f"Claim submitted for Item #{d['item_id']} by {d['claimant_name']} ({d['claimant_contact']})")
+        )
+    except Exception:
+        pass
+
+    conn.commit()
     conn.close()
-    return jsonify({"message": "Claim submitted — awaiting Admin verification.", "claim_id": new_claim_id})
+    return jsonify({"message": "Claim submitted — awaiting Owner/Admin verification.", "claim_id": new_claim_id})
 
 
 @app.route('/api/claims')
@@ -315,18 +351,142 @@ def notify_found_item(item_id):
     })
 
 
-# Approving in MySQL fires trigger: trg_resolve_item_on_claim
+# Approving claim requires reporter or admin authorization; fires MySQL trigger trg_resolve_item_on_claim
 @app.route('/api/claims/approve/<int:claim_id>', methods=['POST'])
 def approve_claim(claim_id):
+    d = request.json or {}
+    req_user_id = d.get('user_id')
+    req_role = (d.get('role') or '').upper()
+
     conn, mode = get_db()
-    cur = conn.cursor()
+    cur = conn.cursor(dictionary=True) if mode == 'MYSQL' else conn.cursor()
     p = ph(mode)
+
+    # Fetch claim and associated item reporter
+    cur.execute(
+        f"""SELECT c.claim_id, c.item_id, c.claimant_name, i.title, i.reported_by, u.full_name AS reporter_name 
+            FROM claims c 
+            JOIN items i ON c.item_id = i.item_id 
+            JOIN users u ON i.reported_by = u.user_id 
+            WHERE c.claim_id = {p}""",
+        (claim_id,)
+    )
+    claim_info = cur.fetchone()
+    if not claim_info:
+        conn.close()
+        return jsonify({'success': False, 'message': 'Claim record not found.'}), 404
+
+    item_reported_by = claim_info['reported_by'] if mode == 'MYSQL' else claim_info[4]
+    item_title = claim_info['title'] if mode == 'MYSQL' else claim_info[3]
+
+    # Verify authorization: Must be ADMIN or the user who reported the item
+    is_admin = (req_role == 'ADMIN')
+    if req_user_id:
+        cur.execute(f"SELECT role FROM users WHERE user_id = {p}", (req_user_id,))
+        u = cur.fetchone()
+        if u:
+            u_role = u['role'] if mode == 'MYSQL' else u[0]
+            if u_role == 'ADMIN':
+                is_admin = True
+
+    is_reporter = (req_user_id is not None and int(req_user_id) == int(item_reported_by))
+
+    if not (is_admin or is_reporter):
+        conn.close()
+        return jsonify({
+            'success': False,
+            'message': 'Access Denied: Only the person who reported this item or an Admin can confirm handover and resolve this record.'
+        }), 403
+
     cur.execute(f"UPDATE claims SET status='APPROVED' WHERE claim_id={p}", (claim_id,))
     if mode == 'SQLITE':  # simulate trigger for demo mode
         cur.execute("UPDATE items SET status='RESOLVED' WHERE item_id=(SELECT item_id FROM claims WHERE claim_id=?)", (claim_id,))
+        try:
+            cur.execute("INSERT INTO activity_logs (action_type, details) VALUES ('CLAIM_APPROVED', ?)", (f"Claim #{claim_id} approved for Item #{claim_info[1]}",))
+        except Exception:
+            pass
+
     conn.commit()
     conn.close()
-    return jsonify({"message": "Claim APPROVED — trigger marked item as RESOLVED."})
+    return jsonify({
+        'success': True,
+        'message': f"Claim #{claim_id} for '{item_title}' approved! Item marked RESOLVED via trigger."
+    })
+
+
+# Direct item resolution endpoint (for reporter or admin)
+@app.route('/api/items/<int:item_id>/resolve', methods=['POST'])
+def resolve_item(item_id):
+    d = request.json or {}
+    req_user_id = d.get('user_id')
+    req_role = (d.get('role') or '').upper()
+
+    conn, mode = get_db()
+    cur = conn.cursor(dictionary=True) if mode == 'MYSQL' else conn.cursor()
+    p = ph(mode)
+
+    cur.execute(f"SELECT item_id, title, reported_by FROM items WHERE item_id = {p}", (item_id,))
+    it = cur.fetchone()
+    if not it:
+        conn.close()
+        return jsonify({'success': False, 'message': 'Item not found.'}), 404
+
+    item_reported_by = it['reported_by'] if mode == 'MYSQL' else it[2]
+    item_title = it['title'] if mode == 'MYSQL' else it[1]
+
+    is_admin = (req_role == 'ADMIN')
+    user_name = "Admin"
+    if req_user_id:
+        cur.execute(f"SELECT role, full_name FROM users WHERE user_id = {p}", (req_user_id,))
+        u = cur.fetchone()
+        if u:
+            u_role = u['role'] if mode == 'MYSQL' else u[0]
+            user_name = u['full_name'] if mode == 'MYSQL' else u[1]
+            if u_role == 'ADMIN':
+                is_admin = True
+
+    is_reporter = (req_user_id is not None and int(req_user_id) == int(item_reported_by))
+
+    if not (is_admin or is_reporter):
+        conn.close()
+        return jsonify({
+            'success': False,
+            'message': 'Access Denied: Only the person who reported this item or an Admin can mark it resolved.'
+        }), 403
+
+    # Mark any pending claims for this item as approved
+    cur.execute(f"UPDATE claims SET status='APPROVED' WHERE item_id={p} AND status='PENDING'", (item_id,))
+    cur.execute(f"UPDATE items SET status='RESOLVED' WHERE item_id={p}", (item_id,))
+
+    try:
+        actor = "Admin" if is_admin else f"Reporter {user_name}"
+        cur.execute(
+            f"INSERT INTO activity_logs (action_type, details) VALUES ({p}, {p})",
+            ('ITEM_RESOLVED', f"Item #{item_id} ('{item_title}') confirmed & marked RESOLVED by {actor}")
+        )
+    except Exception:
+        pass
+
+    conn.commit()
+    conn.close()
+    return jsonify({
+        'success': True,
+        'message': f"Item #{item_id} ('{item_title}') successfully marked as RESOLVED!"
+    })
+
+
+# Fetch full activity & audit logs from activity_logs table
+@app.route('/api/logs')
+def get_logs():
+    conn, mode = get_db()
+    cur = conn.cursor(dictionary=True) if mode == 'MYSQL' else conn.cursor()
+    cur.execute("SELECT log_id, action_type, details, log_time FROM activity_logs ORDER BY log_id DESC LIMIT 150")
+    data = rows(cur, mode)
+    for row in data:
+        if row.get('log_time') and not isinstance(row['log_time'], str):
+            row['log_time'] = str(row['log_time'])
+    conn.close()
+    return jsonify(data)
 
 
 @app.route('/api/stats')
@@ -334,8 +494,8 @@ def get_stats():
     conn, mode = get_db()
     cur = conn.cursor(dictionary=True) if mode == 'MYSQL' else conn.cursor()
     cur.execute("""SELECT COUNT(*) AS total_items,
-        COALESCE(SUM(report_type='LOST'), 0) AS total_lost,
-        COALESCE(SUM(report_type='FOUND'), 0) AS total_found,
+        COALESCE(SUM(report_type='LOST' AND status!='RESOLVED'), 0) AS total_lost,
+        COALESCE(SUM(report_type='FOUND' AND status!='RESOLVED'), 0) AS total_found,
         COALESCE(SUM(status='RESOLVED'), 0) AS total_resolved FROM items""")
     stat = dict(cur.fetchone()) if mode == 'SQLITE' else cur.fetchone()
     stat['db_mode'] = mode

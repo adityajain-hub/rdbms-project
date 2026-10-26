@@ -70,6 +70,8 @@ let currentFilter = '';
 let currentCategoryFilter = '';
 let isLiveApi = false;
 let isAdminViewActive = false;
+let isRecordsViewActive = false;
+let currentRecordsSubTab = 'resolved';
 
 document.addEventListener('DOMContentLoaded', () => {
   initTheme();
@@ -77,7 +79,11 @@ document.addEventListener('DOMContentLoaded', () => {
   initApp();
 
   document.getElementById('searchInput').addEventListener('input', (e) => {
-    renderGrid(e.target.value.toLowerCase());
+    if (isRecordsViewActive) {
+      filterLogsTable(e.target.value);
+    } else {
+      renderGrid(e.target.value.toLowerCase());
+    }
   });
 
   const overlay = document.getElementById('loginOverlay');
@@ -397,25 +403,22 @@ async function loadStats() {
     }
   }
 
-  if (!stats) {
-    stats = {
-      total_items: allItems.length,
-      total_lost: allItems.filter(i => i.report_type === 'LOST').length,
-      total_found: allItems.filter(i => i.report_type === 'FOUND').length,
-      total_resolved: allItems.filter(i => i.status === 'RESOLVED').length
-    };
-  }
-
+  const activeItemsCount = allItems.filter(i => i.status !== 'RESOLVED').length;
+  const activeLostCount = allItems.filter(i => i.report_type === 'LOST' && i.status !== 'RESOLVED').length;
+  const activeFoundCount = allItems.filter(i => i.report_type === 'FOUND' && i.status !== 'RESOLVED').length;
+  const resolvedItemsCount = allItems.filter(i => i.status === 'RESOLVED').length;
   const pendingClaimsCount = allClaims.filter(c => c.status === 'PENDING').length;
 
-  document.getElementById('barTotal').innerText = stats.total_items || 0;
-  document.getElementById('barLost').innerText = stats.total_lost || 0;
-  document.getElementById('barFound').innerText = stats.total_found || 0;
-  document.getElementById('barResolved').innerText = stats.total_resolved || 0;
+  document.getElementById('barTotal').innerText = stats ? (stats.total_items || allItems.length) : allItems.length;
+  document.getElementById('barLost').innerText = (stats && stats.total_lost !== undefined) ? stats.total_lost : activeLostCount;
+  document.getElementById('barFound').innerText = (stats && stats.total_found !== undefined) ? stats.total_found : activeFoundCount;
+  document.getElementById('barResolved').innerText = (stats && stats.total_resolved !== undefined) ? stats.total_resolved : resolvedItemsCount;
 
-  document.getElementById('countAll').innerText = stats.total_items || 0;
-  document.getElementById('countLost').innerText = stats.total_lost || 0;
-  document.getElementById('countFound').innerText = stats.total_found || 0;
+  document.getElementById('countAll').innerText = activeItemsCount;
+  document.getElementById('countLost').innerText = activeLostCount;
+  document.getElementById('countFound').innerText = activeFoundCount;
+  const countRecordsEl = document.getElementById('countRecords');
+  if (countRecordsEl) countRecordsEl.innerText = resolvedItemsCount;
   document.getElementById('countClaims').innerText = pendingClaimsCount;
 
   // Update status pill to clearly show MySQL vs SQLite mode
@@ -437,7 +440,6 @@ async function loadStats() {
 async function loadItems() {
   if (isLiveApi) {
     let url = `${API_BASE}/api/items`;
-    if (currentFilter) url += `?type=${currentFilter}`;
     try {
       const res = await fetch(url);
       if (res.ok) {
@@ -457,31 +459,40 @@ async function loadItems() {
     }
   }
 
+  if (isRecordsViewActive) {
+    renderRecordsContent();
+    return;
+  }
+
   renderGrid();
 
-  if (allItems.length > 0 && !isAdminViewActive) {
-    const target = allItems.find(i => i.item_id === selectedItemId) || allItems[0];
+  const activeItems = allItems.filter(i => i.status !== 'RESOLVED');
+  if (activeItems.length > 0 && !isAdminViewActive) {
+    const target = activeItems.find(i => i.item_id === selectedItemId) || activeItems[0];
     selectItem(target.item_id);
-  } else if (!isAdminViewActive) {
-    document.getElementById('inspectorHeaderTitle').innerText = 'INSPECTOR';
-    document.getElementById('inspectorHeaderSub').innerText = 'No item selected';
+  } else if (!isAdminViewActive && activeItems.length === 0) {
+    document.getElementById('inspectorHeaderTitle').innerText = 'ALL CLEAR';
+    document.getElementById('inspectorHeaderSub').innerText = 'No active listings';
     document.getElementById('inspectorBody').innerHTML = `
       <p style="color: var(--text-dim); font-size: 0.84rem; text-align: center; margin-top: 40px; line-height: 1.6;">
-        Database is active and ready.<br><br>
-        Click <b>+ Report New Item</b> in the sidebar to log a new lost or found belonging.
+        All reported belongings have been recovered or resolved!<br><br>
+        Click <b>Records</b> in the left navigation to view the archive of resolved items and live system audit logs.
       </p>
     `;
   }
 }
 
-// 4. Render Center Grid with Real Item Photos
+// 4. Render Center Grid (Excludes Resolved Items From All Active Sections!)
 function renderGrid(searchTerm = '') {
-  if (isAdminViewActive) return;
+  if (isAdminViewActive || isRecordsViewActive) return;
 
   const deck = document.getElementById('itemsDeck');
+  deck.className = 'items-grid';
   deck.innerHTML = '';
 
-  let filtered = allItems;
+  // Exclude resolved items from All Belongings, Lost Items, Found Items, and Categories
+  let filtered = allItems.filter(i => i.status !== 'RESOLVED');
+
   if (currentFilter) {
     filtered = filtered.filter(i => i.report_type === currentFilter);
   }
@@ -501,8 +512,8 @@ function renderGrid(searchTerm = '') {
     deck.innerHTML = `
       <div style="grid-column: 1/-1; text-align: center; color: var(--text-dim); padding: 60px 20px;">
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:12px; opacity:0.6;"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
-        <div style="font-weight:600; font-size:0.95rem; margin-bottom:6px; color:var(--text-main);">No Belongings Recorded</div>
-        <div style="font-size:0.82rem;">Click <b>+ Report New Item</b> in the left sidebar to insert your first record.</div>
+        <div style="font-weight:600; font-size:0.95rem; margin-bottom:6px; color:var(--text-main);">No Active Belongings</div>
+        <div style="font-size:0.82rem;">Resolved items are stored in the <b>Records</b> section.<br>Click <b>+ Report New Item</b> in the sidebar to post a new listing.</div>
       </div>`;
     return;
   }
@@ -518,7 +529,7 @@ function renderGrid(searchTerm = '') {
       <div class="item-key ${isSelected}" onclick="selectItem(${item.item_id})">
         <div class="key-header">
           <span class="key-tag ${tagClass}">${item.report_type}</span>
-          <span class="key-status ${item.status === 'RESOLVED' ? 'status-resolved' : ''}">${item.status}</span>
+          <span class="key-status ${item.status === 'CLAIM_PENDING' ? 'status-pending' : ''}">${item.status}</span>
         </div>
         <div class="key-thumb-wrap">
           <img src="${imgSrc}" alt="${item.title}" class="key-thumb" loading="lazy">
@@ -550,6 +561,7 @@ function formatDateStr(str, short = false) {
 // 5. Select Item & Show Full Photo in Right Inspector
 function selectItem(itemId) {
   isAdminViewActive = false;
+  isRecordsViewActive = false;
   selectedItemId = itemId;
   const item = allItems.find(i => i.item_id === itemId);
   if (!item) return;
@@ -564,6 +576,16 @@ function selectItem(itemId) {
   const isResolved = item.status === 'RESOLVED';
   const isPending = item.status === 'CLAIM_PENDING';
   const imgSrc = item.image_url || item.image || 'images/laptop.jpg';
+
+  // Permission Verification: Only the person who reported the item OR Admin can resolve / confirm handover
+  const isReporter = (
+    (currentUser.user_id && item.reported_by && parseInt(currentUser.user_id) === parseInt(item.reported_by)) ||
+    (currentUser.email && item.reported_by_email && currentUser.email.toLowerCase() === item.reported_by_email.toLowerCase()) ||
+    (currentUser.full_name && item.reported_by_name && currentUser.full_name.trim().toLowerCase() === item.reported_by_name.trim().toLowerCase())
+  );
+  const isAdmin = (currentUser.role === 'ADMIN') || 
+                  (currentUser.email && currentUser.email.toLowerCase() === 'aditya.2502052853@muj.maipal.edu');
+  const canResolve = isReporter || isAdmin;
 
   let actionHtml = '';
   if (isFound && !isResolved && !isPending) {
@@ -590,27 +612,52 @@ function selectItem(itemId) {
       </div>
     `;
   } else if (isPending) {
-    actionHtml = `
-      <div style="background: #201a14; border: 1px solid #4a341a; border-radius: 6px; padding: 12px; color: #f59e0b; font-size: 0.8rem; margin-top: 10px;">
-        <div style="font-weight: 700; margin-bottom: 4px; display:flex; align-items:center; gap:6px;">
-          <span>🔔</span> <span>RECOVERY / CLAIM NOTICE PENDING</span>
+    if (canResolve) {
+      actionHtml = `
+        <div style="background: #201a14; border: 1px solid #4a341a; border-radius: 6px; padding: 12px; color: #f59e0b; font-size: 0.8rem; margin-top: 10px;">
+          <div style="font-weight: 700; margin-bottom: 4px; display:flex; align-items:center; gap:6px;">
+            <span>🔔</span> <span>RECOVERY / HANDOVER NOTICE PENDING</span>
+          </div>
+          <p style="font-size: 0.74rem; color: #fcd34d; margin: 0 0 10px 0; line-height: 1.4;">
+            A campus member reported finding this item or filed an ownership claim. As the reporter / Admin, verify and confirm recovery.
+          </p>
+          <button type="button" class="btn-action-primary" style="background:#10b981; border-color:#059669; font-size:0.75rem; padding:8px 10px;" onclick="resolvePendingItemDirectly(${item.item_id})">
+            ✅ Confirm Item Recovered (Mark Resolved)
+          </button>
         </div>
-        <p style="font-size: 0.74rem; color: #fcd34d; margin: 0 0 10px 0; line-height: 1.4;">
-          A campus member reported finding this item or filed an ownership claim.
-        </p>
-        <button type="button" class="btn-action-primary" style="background:#10b981; border-color:#059669; font-size:0.75rem; padding:7px 10px;" onclick="resolvePendingItemDirectly(${item.item_id})">
-          ✅ Confirm Item Recovered (Mark Resolved)
-        </button>
-      </div>
-    `;
+      `;
+    } else {
+      actionHtml = `
+        <div style="background: #181920; border: 1px solid #2d2e3d; border-radius: 6px; padding: 12px; color: #94a3b8; font-size: 0.8rem; margin-top: 10px;">
+          <div style="font-weight: 700; margin-bottom: 4px; display:flex; align-items:center; gap:6px; color:#e2e8f0;">
+            <span>🔒</span> <span>HANDOVER VERIFICATION PENDING</span>
+          </div>
+          <p style="font-size: 0.74rem; color: #94a3b8; margin: 0; line-height: 1.4;">
+            A finder handover notice or claim has been recorded for this belonging.<br><br>
+            <b>Access Restricted:</b> Only the person who reported this item (<b>${item.reported_by_name || 'Owner'}</b>) or Admin Aditya can confirm handover and mark it resolved.
+          </p>
+        </div>
+      `;
+    }
   } else if (isResolved) {
     actionHtml = `
       <div style="background: var(--tag-found-bg); border: 1px solid var(--tag-found-border); border-radius: 4px; padding: 10px; color: var(--accent-green); font-size: 0.8rem; text-align: center; margin-top: 10px;">
-        Case Resolved: Returned to verified owner.
+        Case Resolved: Returned to verified owner. Stored in Records.
       </div>
     `;
   } else if (!isFound && !isResolved) {
     const cleanPhone = (item.contact_phone || '9829000000').replace(/[^0-9]/g, '');
+    let ownerDirectBtn = '';
+    if (canResolve) {
+      ownerDirectBtn = `
+        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border-color);">
+          <button type="button" class="btn-action-secondary" style="font-size: 0.75rem; width: 100%; justify-content: center; color: var(--accent-green); border-color: rgba(16,185,129,0.4);" onclick="directOwnerResolve(${item.item_id})">
+            ✅ I Found / Recovered My Belonging (Mark Resolved)
+          </button>
+        </div>
+      `;
+    }
+
     actionHtml = `
       <div class="finder-notice-box">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
@@ -656,7 +703,10 @@ function selectItem(itemId) {
             </button>
           </form>
         </div>
+        ${ownerDirectBtn}
       </div>
+    `;
+  }
     `;
   }
 
@@ -772,6 +822,22 @@ function toggleFinderNotifyForm() {
 }
 
 async function resolvePendingItemDirectly(itemId) {
+  const item = allItems.find(i => i.item_id === itemId);
+  if (!item) return;
+
+  const isReporter = (
+    (currentUser.user_id && item.reported_by && parseInt(currentUser.user_id) === parseInt(item.reported_by)) ||
+    (currentUser.email && item.reported_by_email && currentUser.email.toLowerCase() === item.reported_by_email.toLowerCase()) ||
+    (currentUser.full_name && item.reported_by_name && currentUser.full_name.trim().toLowerCase() === item.reported_by_name.trim().toLowerCase())
+  );
+  const isAdmin = (currentUser.role === 'ADMIN') || 
+                  (currentUser.email && currentUser.email.toLowerCase() === 'aditya.2502052853@muj.maipal.edu');
+
+  if (!isAdmin && !isReporter) {
+    alert('Access Denied: Only the person who reported this item or an Admin can confirm handover and resolve this record.');
+    return;
+  }
+
   let targetClaim = allClaims.find(c => c.item_id === itemId && c.status === 'PENDING');
   if (!targetClaim && isLiveApi) {
     try {
@@ -784,26 +850,66 @@ async function resolvePendingItemDirectly(itemId) {
   }
 
   if (targetClaim) {
-    await executeApprove(targetClaim.claim_id, true);
+    await executeApprove(targetClaim.claim_id);
   } else {
-    if (isLiveApi) {
-      try {
-        await fetch(`${API_BASE}/api/claims/approve/0`, { method: 'POST' });
-      } catch (e) {}
-    }
-    const it = allItems.find(i => i.item_id === itemId);
-    if (it) it.status = 'RESOLVED';
-    alert(`Item #${itemId} marked as RESOLVED! Returned to verified owner.`);
-    await loadItems();
-    await loadStats();
-    selectItem(itemId);
+    await directOwnerResolve(itemId);
   }
+}
+
+async function directOwnerResolve(itemId) {
+  const targetItem = allItems.find(i => i.item_id === itemId);
+  if (!targetItem) return;
+
+  const isReporter = (
+    (currentUser.user_id && targetItem.reported_by && parseInt(currentUser.user_id) === parseInt(targetItem.reported_by)) ||
+    (currentUser.email && targetItem.reported_by_email && currentUser.email.toLowerCase() === targetItem.reported_by_email.toLowerCase()) ||
+    (currentUser.full_name && targetItem.reported_by_name && currentUser.full_name.trim().toLowerCase() === targetItem.reported_by_name.trim().toLowerCase())
+  );
+  const isAdmin = (currentUser.role === 'ADMIN') || 
+                  (currentUser.email && currentUser.email.toLowerCase() === 'aditya.2502052853@muj.maipal.edu');
+
+  if (!isAdmin && !isReporter) {
+    alert('Access Denied: Only the person who reported this item or an Admin can mark it resolved.');
+    return;
+  }
+
+  if (!confirm(`Mark '${targetItem.title}' as RESOLVED / Recovered?\n\nThis will remove it from active listings and archive it in Records.`)) {
+    return;
+  }
+
+  if (isLiveApi) {
+    try {
+      const res = await fetch(`${API_BASE}/api/items/${itemId}/resolve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: currentUser.user_id,
+          role: currentUser.role
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.message || 'Failed to mark item resolved.');
+        return;
+      }
+    } catch (e) {
+      console.warn('API call failed, updating local state:', e);
+    }
+  }
+
+  targetItem.status = 'RESOLVED';
+  alert(`Item #${itemId} ('${targetItem.title}') marked as RESOLVED!\n\nRemoved from active listings and archived in Records.`);
+  await loadItems();
+  await loadStats();
 }
 
 // 6. Show "Report New Item" Form with Image Attachment
 function showNewItemForm() {
   selectedItemId = null;
   isAdminViewActive = false;
+  isRecordsViewActive = false;
+  const deck = document.getElementById('itemsDeck');
+  if (deck) deck.className = 'items-grid';
   selectedPhotoFile = null;
   selectedPhotoDataUrl = null;
   document.querySelectorAll('.item-key').forEach(el => el.classList.remove('selected'));
@@ -977,9 +1083,12 @@ async function showAdminView(navEl) {
   }
 
   isAdminViewActive = true;
+  isRecordsViewActive = false;
   selectedItemId = null;
   highlightNav(navEl);
   document.getElementById('viewLabel').innerText = 'Showing: Pending Admin Claims';
+  const deck = document.getElementById('itemsDeck');
+  if (deck) deck.className = 'items-grid';
 
   let claims = allClaims.filter(c => c.status === 'PENDING');
   if (isLiveApi) {
@@ -1074,65 +1183,307 @@ function inspectClaim(claimId) {
   `;
 }
 
-async function executeApprove(claimId, allowOwner = false) {
+async function executeApprove(claimId) {
   const claim = allClaims.find(c => c.claim_id === claimId);
   const targetItem = claim ? allItems.find(i => i.item_id === claim.item_id) : null;
-  const isOwner = targetItem && (targetItem.reported_by === currentUser.user_id || targetItem.reported_by_name === currentUser.full_name);
+  
+  const isReporter = targetItem && (
+    (currentUser.user_id && targetItem.reported_by && parseInt(currentUser.user_id) === parseInt(targetItem.reported_by)) ||
+    (currentUser.email && targetItem.reported_by_email && currentUser.email.toLowerCase() === targetItem.reported_by_email.toLowerCase()) ||
+    (currentUser.full_name && targetItem.reported_by_name && currentUser.full_name.trim().toLowerCase() === targetItem.reported_by_name.trim().toLowerCase())
+  );
+  const isAdmin = (currentUser.role === 'ADMIN') || 
+                  (currentUser.email && currentUser.email.toLowerCase() === 'aditya.2502052853@muj.maipal.edu');
 
-  if (currentUser.role !== 'ADMIN' && !isOwner && !allowOwner) {
-    alert('Access Denied: Only Admin (Aditya) or the item owner can confirm and resolve this record.');
+  if (!isAdmin && !isReporter) {
+    alert('Access Denied: Only the person who reported this item or an Admin can confirm handover and resolve this record.');
     return;
   }
 
   if (isLiveApi) {
     try {
-      await fetch(`${API_BASE}/api/claims/approve/${claimId}`, { method: 'POST' });
-      await loadItems();
-      await loadStats();
+      const res = await fetch(`${API_BASE}/api/claims/approve/${claimId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: currentUser.user_id,
+          role: currentUser.role
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.message || 'Approval failed: access denied.');
+        return;
+      }
     } catch (e) {
       console.warn('API call failed, updating local state:', e);
     }
   }
 
   if (claim) claim.status = 'APPROVED';
-  if (targetItem) {
-    targetItem.status = 'RESOLVED';
+  if (targetItem) targetItem.status = 'RESOLVED';
+
+  alert(`Claim / Recovery #${claimId} APPROVED & CONFIRMED!\n\nTrigger 'trg_resolve_item_on_claim' executed:\n→ Item marked as RESOLVED.\n→ Item removed from active listings and archived in Records.\n→ Audit record written to activity_logs.`);
+  
+  await loadItems();
+  await loadStats();
+
+  if (isAdminViewActive) {
+    showAdminView(document.getElementById('adminClaimsNavItem'));
+  } else if (isRecordsViewActive) {
+    showRecordsView(document.getElementById('recordsNavItem'));
+  } else {
+    renderGrid();
+  }
+}
+
+// =====================================================================
+// 7. RECORDS & AUDIT SYSTEM (RESOLVED ITEMS ARCHIVE & ACTIVITY LOGS)
+// =====================================================================
+async function showRecordsView(el, initialSubTab = 'resolved') {
+  isAdminViewActive = false;
+  isRecordsViewActive = true;
+  currentFilter = '';
+  currentCategoryFilter = '';
+  currentRecordsSubTab = initialSubTab;
+  highlightNav(el || document.getElementById('recordsNavItem'));
+
+  const viewLabel = document.getElementById('viewLabel');
+  if (viewLabel) viewLabel.innerText = 'Showing: Records & Activity History';
+
+  await renderRecordsContent();
+}
+
+async function switchRecordsSubTab(tab) {
+  currentRecordsSubTab = tab;
+  await renderRecordsContent();
+}
+
+async function renderRecordsContent() {
+  const deck = document.getElementById('itemsDeck');
+  deck.className = 'grid-scroll-area';
+  const resolvedItems = allItems.filter(i => i.status === 'RESOLVED');
+
+  let logs = [];
+  if (isLiveApi) {
+    try {
+      const res = await fetch(`${API_BASE}/api/logs`);
+      if (res.ok) logs = await res.json();
+    } catch (e) {
+      logs = [];
+    }
   }
 
-  alert(`Claim / Recovery #${claimId} APPROVED & CONFIRMED!\n\nTrigger 'trg_resolve_item_on_claim' executed:\n→ Item marked as RESOLVED.\n→ Audit record written to activity_logs.`);
-  
-  loadStats();
-  if (isAdminViewActive) {
-    showAdminView(document.querySelectorAll('.nav-item')[3]);
-  } else if (targetItem) {
-    selectItem(targetItem.item_id);
+  let bodyHtml = '';
+  if (currentRecordsSubTab === 'resolved') {
+    if (resolvedItems.length === 0) {
+      bodyHtml = `
+        <div style="text-align: center; color: var(--text-dim); padding: 50px 20px;">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:12px; opacity:0.6;"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+          <div style="font-weight:600; font-size:0.95rem; margin-bottom:6px; color:var(--text-main);">No Resolved Records Yet</div>
+          <div style="font-size:0.82rem;">When an active lost or found item is verified and recovered, it will be automatically archived here.</div>
+        </div>
+      `;
+    } else {
+      bodyHtml = `
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px;">
+          ${resolvedItems.map(item => {
+            const isSelected = item.item_id === selectedItemId ? 'selected' : '';
+            const imgSrc = item.image_url || item.image || 'images/laptop.jpg';
+            const dateStr = formatDateStr(item.date_incident, true);
+            return `
+              <div class="item-key ${isSelected}" onclick="inspectResolvedItem(${item.item_id})" style="border-color: rgba(16, 185, 129, 0.4);">
+                <div class="key-header">
+                  <span class="key-tag tag-${item.report_type.toLowerCase()}">${item.report_type}</span>
+                  <span class="key-status status-resolved">RESOLVED</span>
+                </div>
+                <div class="key-thumb-wrap">
+                  <img src="${imgSrc}" alt="${item.title}" class="key-thumb" loading="lazy">
+                </div>
+                <div class="key-body">
+                  <div class="key-title" title="${item.title}">${item.title}</div>
+                  <div style="font-size: 0.72rem; color: var(--accent-green); margin-top: 3px;">✓ Handover Complete</div>
+                </div>
+                <div class="key-footer">
+                  <span>${item.location}</span>
+                  <span>${dateStr}</span>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+  } else {
+    // Audit & Activity Logs Tab
+    if (logs.length === 0) {
+      bodyHtml = `
+        <div style="text-align: center; color: var(--text-dim); padding: 50px 20px;">
+          <div style="font-weight:600; font-size:0.95rem; margin-bottom:6px; color:var(--text-main);">No Activity Logs Recorded</div>
+        </div>
+      `;
+    } else {
+      bodyHtml = `
+        <div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+          <input type="text" id="logFilterInput" class="search-field" placeholder="Filter audit logs by keyword or action..." oninput="filterLogsTable(this.value)" style="max-width: 320px; font-size: 0.78rem; padding: 6px 10px;">
+          <span style="font-size: 0.75rem; color: var(--text-dim);">${logs.length} system audit entries recorded in MySQL</span>
+        </div>
+        <div class="log-table-wrap">
+          <table class="log-table" id="activityLogsTable">
+            <thead>
+              <tr>
+                <th style="width: 70px;">ID</th>
+                <th style="width: 150px;">Action Type</th>
+                <th>Event Details</th>
+                <th style="width: 160px;">Timestamp</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${logs.map(log => {
+                let badgeClass = 'badge-log-reported';
+                if (log.action_type === 'CLAIM_APPROVED' || log.action_type === 'ITEM_RESOLVED') badgeClass = 'badge-log-approved';
+                else if (log.action_type === 'FINDER_NOTIFIED') badgeClass = 'badge-log-notified';
+                else if (log.action_type === 'CLAIM_SUBMITTED') badgeClass = 'badge-log-claimed';
+                else if (log.action_type === 'USER_REGISTERED') badgeClass = 'badge-log-registered';
+
+                return `
+                  <tr>
+                    <td style="color: var(--text-dim); font-family: monospace;">#${log.log_id}</td>
+                    <td>
+                      <span class="log-action-badge ${badgeClass}">${log.action_type}</span>
+                    </td>
+                    <td>${log.details}</td>
+                    <td style="color: var(--text-muted); font-size: 0.75rem; font-family: monospace;">${log.log_time}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
   }
+
+  deck.innerHTML = `
+    <div class="records-container">
+      <div class="records-subnav">
+        <button type="button" class="records-subtab ${currentRecordsSubTab === 'resolved' ? 'active' : ''}" onclick="switchRecordsSubTab('resolved')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+          <span>Resolved Belongings Archive (${resolvedItems.length})</span>
+        </button>
+        <button type="button" class="records-subtab ${currentRecordsSubTab === 'logs' ? 'active' : ''}" onclick="switchRecordsSubTab('logs')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+          <span>Audit & Activity Logs (${logs.length})</span>
+        </button>
+      </div>
+      ${bodyHtml}
+    </div>
+  `;
+
+  // Update Inspector for records
+  if (currentRecordsSubTab === 'resolved' && resolvedItems.length > 0) {
+    inspectResolvedItem(resolvedItems[0].item_id);
+  } else if (currentRecordsSubTab === 'logs') {
+    document.getElementById('inspectorHeaderTitle').innerText = 'AUDIT SYSTEM';
+    document.getElementById('inspectorHeaderSub').innerText = 'MySQL activity_logs';
+    document.getElementById('inspectorBody').innerHTML = `
+      <div class="info-display-box" style="line-height: 1.6;">
+        <div style="font-weight: 700; color: var(--accent-green); margin-bottom: 6px;">DATABASE AUDIT LOGGING</div>
+        <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0 0 8px 0;">
+          All life-cycle events on the portal are permanently recorded in MySQL <code>activity_logs</code> table:
+        </p>
+        <ul style="font-size: 0.75rem; color: var(--text-dim); padding-left: 16px; margin: 0;">
+          <li><b>ITEM_REPORTED</b>: When a student/staff reports a lost or found belonging.</li>
+          <li><b>FINDER_NOTIFIED</b>: Direct handover notice sent to owner without duplicate listing.</li>
+          <li><b>CLAIM_SUBMITTED</b>: Proof of ownership submitted for found items.</li>
+          <li><b>CLAIM_APPROVED</b>: Executed via trigger <code>trg_resolve_item_on_claim</code>.</li>
+          <li><b>ITEM_RESOLVED</b>: Owner/Admin verified recovery.</li>
+          <li><b>USER_REGISTERED</b>: New student/faculty account created.</li>
+        </ul>
+      </div>
+    `;
+  }
+}
+
+function filterLogsTable(keyword) {
+  const kw = (keyword || '').toLowerCase();
+  const rows = document.querySelectorAll('#activityLogsTable tbody tr');
+  rows.forEach(r => {
+    const text = r.innerText.toLowerCase();
+    r.style.display = text.includes(kw) ? '' : 'none';
+  });
+}
+
+function inspectResolvedItem(itemId) {
+  selectedItemId = itemId;
+  const item = allItems.find(i => i.item_id === itemId);
+  if (!item) return;
+
+  document.querySelectorAll('.item-key').forEach(el => el.classList.remove('selected'));
+  const card = document.querySelector(`.item-key[onclick="inspectResolvedItem(${itemId})"]`);
+  if (card) card.classList.add('selected');
+
+  document.getElementById('inspectorHeaderTitle').innerText = `RECORD: ITEM #${item.item_id}`;
+  document.getElementById('inspectorHeaderSub').innerText = `${item.title} (RESOLVED)`;
+
+  const imgSrc = item.image_url || item.image || 'images/laptop.jpg';
+
+  document.getElementById('inspectorBody').innerHTML = `
+    <div class="inspector-thumb-box">
+      <img src="${imgSrc}" alt="${item.title}" class="inspector-thumb-img">
+    </div>
+
+    <div class="info-display-box">
+      <div><b>Target Belonging:</b> ${item.title}</div>
+      <div><b>Category:</b> ${item.category_name}</div>
+      <div><b>Incident Location:</b> ${item.location}</div>
+      <div><b>Reported By:</b> ${item.reported_by_name || 'Campus Member'}</div>
+      <div><b>Report Type:</b> <span class="key-tag tag-${item.report_type.toLowerCase()}">${item.report_type}</span></div>
+      <div><b>Case Status:</b> <span style="font-weight:700; color:var(--accent-green);">RESOLVED & RETURNED</span></div>
+      <div style="margin-top: 8px; border-top: 1px solid var(--border-color); padding-top: 6px;">
+        <b>Description:</b><br>${item.description}
+      </div>
+    </div>
+
+    <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 6px; padding: 12px; margin-top: 12px; color: var(--accent-green); font-size: 0.78rem; line-height: 1.5;">
+      <div style="font-weight: 700; display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+        <span>✓</span> <span>VERIFIED HANDOVER ARCHIVED</span>
+      </div>
+      This belonging has been successfully recovered by its owner or handed over at the security desk. Archived in Records.
+    </div>
+  `;
 }
 
 // Navigation Filter Helpers
 function setNavFilter(type, el) {
   isAdminViewActive = false;
+  isRecordsViewActive = false;
+  const deck = document.getElementById('itemsDeck');
+  if (deck) deck.className = 'items-grid';
   currentFilter = type;
   currentCategoryFilter = '';
   highlightNav(el);
   document.getElementById('viewLabel').innerText = type ? `Showing: ${type} Items` : 'Showing: All Items';
   renderGrid();
-  if (allItems.length > 0) {
-    const firstMatch = allItems.find(i => !type || i.report_type === type);
-    if (firstMatch) selectItem(firstMatch.item_id);
+  const activeItems = allItems.filter(i => i.status !== 'RESOLVED' && (!type || i.report_type === type));
+  if (activeItems.length > 0) {
+    selectItem(activeItems[0].item_id);
   }
 }
 
 function setCategoryFilter(catId, el) {
   isAdminViewActive = false;
+  isRecordsViewActive = false;
+  const deck = document.getElementById('itemsDeck');
+  if (deck) deck.className = 'items-grid';
   const cat = categories.find(c => c.category_id === catId);
   currentCategoryFilter = cat ? cat.category_name : '';
   highlightNav(el);
   document.getElementById('viewLabel').innerText = `Category: ${currentCategoryFilter}`;
   renderGrid();
-  if (allItems.length > 0) {
-    const firstMatch = allItems.find(i => i.category_name === currentCategoryFilter);
-    if (firstMatch) selectItem(firstMatch.item_id);
+  const activeItems = allItems.filter(i => i.status !== 'RESOLVED' && i.category_name === currentCategoryFilter);
+  if (activeItems.length > 0) {
+    selectItem(activeItems[0].item_id);
   }
 }
 
@@ -1140,3 +1491,4 @@ function highlightNav(el) {
   document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
   if (el) el.classList.add('active');
 }
+
