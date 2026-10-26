@@ -1025,6 +1025,7 @@ function showNewItemForm() {
       status: 'ACTIVE',
       reported_by: currentUser.user_id || 1,
       reported_by_name: currentUser.full_name || 'Campus Member',
+      reported_by_email: currentUser.email || '',
       contact_phone: currentUser.phone || '9829012345',
       image_url: finalImageUrl,
       image: finalImageUrl
@@ -1043,6 +1044,10 @@ function showNewItemForm() {
         if (res.ok) {
           const resData = await res.json();
           if (resData.item_id) assignedId = resData.item_id;
+          if (resData.user_id) {
+            currentUser.user_id = resData.user_id;
+            localStorage.setItem('campus_auth_user', JSON.stringify(currentUser));
+          }
           savedToBackend = true;
         } else {
           console.error('API save failed with status:', res.status, await res.text());

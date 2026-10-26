@@ -231,33 +231,82 @@ def add_item():
     conn, mode = get_db()
     cur = conn.cursor(dictionary=True) if mode == 'MYSQL' else conn.cursor()
     p = ph(mode)
-    cur.execute(
-        f"INSERT INTO items (report_type,title,description,category_id,location,date_incident,image_url,reported_by)"
-        f" VALUES ({p},{p},{p},{p},{p},{p},{p},{p})",
-        (d['report_type'], d['title'], d['description'],
-         d['category_id'], d['location'], d['date_incident'],
-         d.get('image_url', 'images/laptop.jpg'), d.get('reported_by', 1))
-    )
-    conn.commit()
-    new_id = cur.lastrowid
-
-    # Audit log item creation
+    
     try:
-        user_name = "Campus Member"
-        cur.execute(f"SELECT full_name FROM users WHERE user_id = {p}", (d.get('reported_by', 1),))
-        u_row = cur.fetchone()
-        if u_row:
-            user_name = u_row['full_name'] if mode == 'MYSQL' else u_row[0]
+        reported_by = d.get('reported_by', 1)
+        reporter_name = (d.get('reported_by_name') or 'Campus Member').strip()
+        reporter_phone = (d.get('contact_phone') or '9829000000').strip()
+        reporter_email = (d.get('reported_by_email') or '').strip().lower()
+        user_name = reporter_name
+
+        # Ensure reported_by exists in users table to satisfy foreign key constraint
+        valid_user = False
+        try:
+            if reported_by:
+                cur.execute(f"SELECT user_id, full_name FROM users WHERE user_id = {p}", (int(reported_by),))
+                u_row = cur.fetchone()
+                if u_row:
+                    valid_user = True
+                    user_name = u_row['full_name'] if mode == 'MYSQL' else u_row[1]
+        except Exception:
+            valid_user = False
+
+        if not valid_user:
+            # Try finding user by email or full name
+            if reporter_email:
+                cur.execute(f"SELECT user_id, full_name FROM users WHERE LOWER(email) = {p}", (reporter_email,))
+                u_row = cur.fetchone()
+                if u_row:
+                    reported_by = u_row['user_id'] if mode == 'MYSQL' else u_row[0]
+                    user_name = u_row['full_name'] if mode == 'MYSQL' else u_row[1]
+                    valid_user = True
+
+            if not valid_user and reporter_name and reporter_name != 'Campus Member':
+                cur.execute(f"SELECT user_id, full_name FROM users WHERE LOWER(full_name) = {p}", (reporter_name.lower(),))
+                u_row = cur.fetchone()
+                if u_row:
+                    reported_by = u_row['user_id'] if mode == 'MYSQL' else u_row[0]
+                    user_name = u_row['full_name'] if mode == 'MYSQL' else u_row[1]
+                    valid_user = True
+
+            if not valid_user:
+                # User does not exist in MySQL yet (e.g. custom or offline session).
+                # Auto-insert into users table so foreign key constraint is 100% satisfied
+                auto_email = reporter_email or f"{reporter_name.lower().replace(' ', '.')}@muj.manipal.edu"
+                cur.execute(
+                    f"INSERT INTO users (full_name, email, phone, password, role) VALUES ({p}, {p}, {p}, 'student@123', 'STUDENT')",
+                    (reporter_name, auto_email, reporter_phone)
+                )
+                conn.commit()
+                reported_by = cur.lastrowid
+                user_name = reporter_name
+
         cur.execute(
-            f"INSERT INTO activity_logs (action_type, details) VALUES ({p}, {p})",
-            ('ITEM_REPORTED', f"New {d['report_type']} item reported: '{d['title']}' at {d['location']} by {user_name}")
+            f"INSERT INTO items (report_type,title,description,category_id,location,date_incident,image_url,reported_by)"
+            f" VALUES ({p},{p},{p},{p},{p},{p},{p},{p})",
+            (d['report_type'], d['title'], d['description'],
+             d['category_id'], d['location'], d['date_incident'],
+             d.get('image_url', 'images/laptop.jpg'), reported_by)
         )
         conn.commit()
-    except Exception:
-        pass
+        new_id = cur.lastrowid
 
-    conn.close()
-    return jsonify({"message": f"{d['report_type']} item reported!", "item_id": new_id})
+        # Audit log item creation
+        try:
+            cur.execute(
+                f"INSERT INTO activity_logs (action_type, details) VALUES ({p}, {p})",
+                ('ITEM_REPORTED', f"New {d['report_type']} item reported: '{d['title']}' at {d['location']} by {user_name}")
+            )
+            conn.commit()
+        except Exception:
+            pass
+
+        return jsonify({"message": f"{d['report_type']} item reported!", "item_id": new_id, "user_id": reported_by})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": str(e), "message": "Failed to save item to database."}), 500
+    finally:
+        conn.close()
 
 
 @app.route('/api/claims', methods=['POST'])
